@@ -9,7 +9,7 @@ jobs:
   dependsOn:
   - build
   - test
-  displayName: Deploy App to Storage Account
+  displayName: Deploy Console
   pool:
     vmImage: 'windows-latest'
   environment: dev
