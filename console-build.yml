@@ -23,7 +23,7 @@ jobs:
 
   - script: dotnet build --configuration ${{ parameters.buildConfiguration }}
     displayName: 'dotnet build ${{ parameters.buildConfiguration }}'
-    condition: eq(parameters['runBuild'], true)
+    condition: eq(variables['runBuild'], true)
 
   - task: PublishPipelineArtifact@1
     inputs:
