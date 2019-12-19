@@ -1,0 +1,22 @@
+parameters:
+  buildConfiguration: release
+  repoName: self
+
+jobs:
+- job: build_console
+  displayName: Build Console
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - checkout: ${{ parameters.repoName }}
+
+  = script: dotnet build --configuration ${{ parameters.buildConfiguration }}
+  displayName: 'dotnet build ${{ parameters.buildConfiguration }}'
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '**/bin/$(buildConfiguration)'
+      artifact: 'drop'
+      publishLocation: 'pipeline'
