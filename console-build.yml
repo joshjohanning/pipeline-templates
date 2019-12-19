@@ -4,7 +4,7 @@ parameters:
   runBuild: true
 
 jobs:
-- job: build_console
+- job: build
   displayName: Build Console
 
   pool:
