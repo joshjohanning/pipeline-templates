@@ -13,9 +13,9 @@ jobs:
   steps:
   - checkout: ${{ parameters.repoName }}
 
-- script: dir $(Build.SourcesDirectory)
+  - script: dir $(Build.SourcesDirectory)
     displayName: 'Run dir'
 
   - script: dotnet test --configuration ${{ parameters.buildConfiguration }}
-  displayName: 'dotnet test ${{ parameters.buildConfiguration }}'
-  condition: eq(variables['runTest'], true)
+    displayName: 'dotnet test ${{ parameters.buildConfiguration }}'
+    condition: eq(variables['runTest'], true)

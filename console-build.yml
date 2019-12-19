@@ -13,7 +13,7 @@ jobs:
   steps:
   - checkout: ${{ parameters.repoName }}
 
-- script: dir $(Build.SourcesDirectory)
+  - script: dir $(Build.SourcesDirectory)
     displayName: 'Run dir'
 
   - script: |
@@ -22,8 +22,8 @@ jobs:
     name: DetermineResult
 
   - script: dotnet build --configuration ${{ parameters.buildConfiguration }}
-  displayName: 'dotnet build ${{ parameters.buildConfiguration }}'
-  condition: eq(parameters['runBuild'], true)
+    displayName: 'dotnet build ${{ parameters.buildConfiguration }}'
+    condition: eq(parameters['runBuild'], true)
 
   - task: PublishPipelineArtifact@1
     inputs:
