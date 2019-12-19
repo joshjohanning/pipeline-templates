@@ -1,6 +1,6 @@
 parameters:
   repoName: self
-  azureSubscription: 'Visual Studio Enterprise – MPN(93ddb8b3-ddb9-4d1c-ba59-421456e65538)'
+  azureSubscription: ''
   storage: ''
   containerName: ''
 
@@ -22,7 +22,7 @@ jobs:
           - task: AzureFileCopy@3
             inputs:
               SourcePath: '$(Pipeline.Workspace)'
-              azureSubscription: 'Visual Studio Enterprise – MPN(93ddb8b3-ddb9-4d1c-ba59-421456e65538)'
+              azureSubscription: '${{ parameters.azureSubscription }}'
               Destination: 'AzureBlob'
-              storage: '{{ parameters.storage }}'
-              ContainerName: '{{ parameters.containerName }}'
+              storage: '${{ parameters.storage }}'
+              ContainerName: '${{ parameters.containerName }}'
