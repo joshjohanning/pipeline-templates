@@ -25,6 +25,14 @@ jobs:
     displayName: 'dotnet build ${{ parameters.buildConfiguration }}'
     condition: eq(variables['runBuild'], true)
 
+  - task: CopyFiles@2
+    displayName: Copy files to staging
+    condition: eq(variables['runBuild'], true)
+    inputs:
+      Contents: '**/bin/$(buildConfiguration)/**'
+      TargetFolder: '$(build.artifactstagingdirectory)'
+      flattenFolders: true
+
   - task: PublishPipelineArtifact@1
     inputs:
       targetPath: '**/bin/$(buildConfiguration)'
