@@ -12,8 +12,17 @@ jobs:
   steps:
   - checkout: ${{ parameters.repoName }}
 
-  = script: dotnet build --configuration ${{ parameters.buildConfiguration }}
+- script: dir $(Build.SourcesDirectory)
+    displayName: 'Run dir'
+
+  - script: |
+      echo "This is job Foo."
+      echo "##vso[task.setvariable variable=doThing;isOutput=true]Yes" #The variable doThing is set to true
+    name: DetermineResult
+
+  - script: dotnet build --configuration ${{ parameters.buildConfiguration }}
   displayName: 'dotnet build ${{ parameters.buildConfiguration }}'
+  condition: eq(variables['runBuild'], true)
 
   - task: PublishPipelineArtifact@1
     inputs:
