@@ -1,0 +1,21 @@
+parameters:
+  buildConfiguration: release
+  repoName: self
+  runTest: true
+
+jobs:
+- job: dotnet_test
+  displayName: Test
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - checkout: ${{ parameters.repoName }}
+
+- script: dir $(Build.SourcesDirectory)
+    displayName: 'Run dir'
+
+  - script: dotnet test --configuration ${{ parameters.buildConfiguration }}
+  displayName: 'dotnet test ${{ parameters.buildConfiguration }}'
+  condition: eq(variables['runTest'], true)
