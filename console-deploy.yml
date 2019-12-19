@@ -1,0 +1,28 @@
+parameters:
+  repoName: self
+  azureSubscription: ''
+  storage: ''
+  containerName: ''
+
+jobs:
+- deployment: DeployApp
+  dependsOn:
+  - build
+  - test
+  displayName: Deploy App to Storage Account
+  pool:
+    vmImage: 'windows-latest'
+  environment: dev
+  strategy: 
+    runOnce:
+      deploy:
+        steps:
+          - script: echo my first deployment
+
+          - task: AzureFileCopy@3
+            inputs:
+              SourcePath: '$(Pipeline.Workspace)'
+              azureSubscription: '{{ parameters.azureSubscription }}'
+              Destination: 'AzureBlob'
+              storage: '{{ parameters.storage }}'
+              ContainerName: '{{ parameters.containerName }}'
