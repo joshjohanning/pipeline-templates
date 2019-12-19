@@ -35,6 +35,6 @@ jobs:
 
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: '**/bin/$(buildConfiguration)'
+      targetPath: '$(build.artifactstagingdirectory)'
       artifact: 'drop'
       publishLocation: 'pipeline'
