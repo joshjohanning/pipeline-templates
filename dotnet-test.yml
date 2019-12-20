@@ -6,7 +6,6 @@ parameters:
 jobs:
 - job: test
   displayName: Dotnet Test
-  dependsOn: build
 
   pool:
     vmImage: 'ubuntu-latest'
