@@ -2,10 +2,12 @@ parameters:
   buildConfiguration: release
   repoName: self
   runTest: true
+  dependsOn: Build
 
 jobs:
 - job: test
   displayName: Dotnet Test
+  dependsOn: ${{ parameters.dependsOn }}
 
   pool:
     vmImage: 'ubuntu-latest'
