@@ -4,9 +4,8 @@ parameters:
   runBuild: true
 
 stages:
-- stage: build
-  displayName: Build
-  
+- stage: Build
+
   jobs:
   - job: build
     displayName: Build Console
