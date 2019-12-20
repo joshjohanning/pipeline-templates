@@ -6,9 +6,6 @@ parameters:
 
 jobs:
 - deployment: DeployApp
-  dependsOn:
-  - build
-  - test
   displayName: Deploy Console
   pool:
     vmImage: 'windows-latest'
