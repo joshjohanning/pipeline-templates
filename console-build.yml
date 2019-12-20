@@ -3,41 +3,38 @@ parameters:
   repoName: self
   runBuild: true
 
-stages:
-- stage: Build
+jobs:
+- job: build
+  displayName: Build Console
 
-  jobs:
-  - job: build
-    displayName: Build Console
+  pool:
+    vmImage: 'ubuntu-latest'
 
-    pool:
-      vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: ${{ parameters.repoName }}
 
-    steps:
-    - checkout: ${{ parameters.repoName }}
+  - script: dir $(Build.SourcesDirectory)
+    displayName: 'Run dir'
 
-    - script: dir $(Build.SourcesDirectory)
-      displayName: 'Run dir'
+  - script: |
+      echo "This is job Foo."
+      echo "##vso[task.setvariable variable=doThing;isOutput=true]Yes" #The variable doThing is set to true
+    name: DetermineResult
 
-    - script: |
-        echo "This is job Foo."
-        echo "##vso[task.setvariable variable=doThing;isOutput=true]Yes" #The variable doThing is set to true
-      name: DetermineResult
+  - script: dotnet build --configuration ${{ parameters.buildConfiguration }}
+    displayName: 'dotnet build ${{ parameters.buildConfiguration }}'
+    condition: eq(variables['runBuild'], true)
 
-    - script: dotnet build --configuration ${{ parameters.buildConfiguration }}
-      displayName: 'dotnet build ${{ parameters.buildConfiguration }}'
-      condition: eq(variables['runBuild'], true)
+  - task: CopyFiles@2
+    displayName: Copy files to staging
+    condition: eq(variables['runBuild'], true)
+    inputs:
+      Contents: '**/bin/$(buildConfiguration)/**'
+      TargetFolder: '$(build.artifactstagingdirectory)'
+      flattenFolders: true
 
-    - task: CopyFiles@2
-      displayName: Copy files to staging
-      condition: eq(variables['runBuild'], true)
-      inputs:
-        Contents: '**/bin/$(buildConfiguration)/**'
-        TargetFolder: '$(build.artifactstagingdirectory)'
-        flattenFolders: true
-
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: '$(build.artifactstagingdirectory)'
-        artifact: 'drop'
-        publishLocation: 'pipeline'
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(build.artifactstagingdirectory)'
+      artifact: 'drop'
+      publishLocation: 'pipeline'
