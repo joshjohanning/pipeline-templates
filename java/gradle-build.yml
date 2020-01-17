@@ -1,6 +1,9 @@
 parameters:
   repoName: self
 
+variables: 
+  publishing.publications.myPlatform.version: 3.2.1
+
 jobs:
 - job: Build
 
@@ -10,9 +13,11 @@ jobs:
   steps:
   #- checkout: ${{ parameters.repoName }}
 
-  - script: |
-      env project.version="3.0.2-SNAPSHOT"
-      echo ${project.version}
+  - task: FileTransform@2
+    inputs:
+      folderPath: '$(System.DefaultWorkingDirectory)'
+      xmlTransformationRules: 
+      jsonTargetFiles: 'build.gradle'
 
   - task: MavenAuthenticate@0
     inputs:
