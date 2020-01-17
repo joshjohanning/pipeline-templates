@@ -25,3 +25,6 @@ jobs:
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
       tasks: 'build'
+
+ - publish: $(build.sourcesdirectory)
+   artifact: drop
