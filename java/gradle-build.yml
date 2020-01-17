@@ -11,7 +11,7 @@ jobs:
   #- checkout: ${{ parameters.repoName }}
 
   - script: |
-      project.version=version=3.0.2-SNAPSHOT
+      project.version = "version=3.0.2-SNAPSHOT"
       echo ${project.version}
 
   - task: MavenAuthenticate@0
