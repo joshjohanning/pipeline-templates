@@ -1,6 +1,7 @@
 parameters:
   repoName: self
   publishing.publications.myPlatform.version: 3.2.2
+  project.version: 3.4.1
 
 jobs:
 - job: Build
@@ -11,11 +12,11 @@ jobs:
   steps:
   #- checkout: ${{ parameters.repoName }}
 
-  - task: FileTransform@2
+  - task: ReplaceTokens@1
     inputs:
-      folderPath: '$(System.DefaultWorkingDirectory)'
-      xmlTransformationRules: 
-      jsonTargetFiles: 'build.gradle'
+      sourcePath: 
+      filePattern: 'build.gradle'
+      tokenRegex: '\${project\.version}'
 
   - task: MavenAuthenticate@0
     inputs:
