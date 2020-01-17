@@ -16,7 +16,7 @@ jobs:
     inputs:
       sourcePath: 
       filePattern: 'build.gradle'
-      tokenRegex: '\${project\.version}'
+      tokenRegex: '\${(\w+.\w+)}'
 
   - task: MavenAuthenticate@0
     inputs:
