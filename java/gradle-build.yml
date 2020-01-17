@@ -1,0 +1,5 @@
+parameters:
+  buildConfiguration: release
+  
+jobs:
+- job: build
