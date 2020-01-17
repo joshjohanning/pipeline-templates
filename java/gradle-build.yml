@@ -2,7 +2,7 @@ parameters:
   repoName: self
 
 jobs:
-- job: build
+- job: Build
 
   pool:
     vmImage: 'ubuntu-latest'
