@@ -11,7 +11,7 @@ jobs:
   #- checkout: ${{ parameters.repoName }}
 
   - script: |
-      env "project.version="version=3.0.2-SNAPSHOT"" bash
+      env project.version="version=3.0.2-SNAPSHOT" bash
 
   - task: MavenAuthenticate@0
     inputs:
