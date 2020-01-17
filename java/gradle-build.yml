@@ -1,7 +1,8 @@
 parameters:
   repoName: self
   publishing.publications.myPlatform.version: 3.2.2
-  project.version: 3.4.1
+  project.version: ''
+  project.parent.project.version: ''
 
 jobs:
 - job: Build
