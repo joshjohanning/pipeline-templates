@@ -32,7 +32,7 @@ jobs:
       jdkArchitectureOption: 'x64'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
-      tasks: 'build'
+      tasks: 'clean build'
 
   - publish: $(build.sourcesdirectory)
     artifact: drop
