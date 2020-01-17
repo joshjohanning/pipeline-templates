@@ -12,6 +12,7 @@ jobs:
 
   - script: |
       env project.version="3.0.2-SNAPSHOT"
+      echo ${project.version}
 
   - task: MavenAuthenticate@0
     inputs:
