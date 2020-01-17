@@ -1,8 +1,6 @@
 parameters:
   repoName: self
-
-variables: 
-  publishing.publications.myPlatform.version: 3.2.1
+  publishing.publications.myPlatform.version: 3.2.2
 
 jobs:
 - job: Build
