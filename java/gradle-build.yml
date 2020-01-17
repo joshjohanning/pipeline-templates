@@ -26,5 +26,5 @@ jobs:
       testResultsFiles: '**/TEST-*.xml'
       tasks: 'build'
 
- - publish: $(build.sourcesdirectory)
-   artifact: drop
+  - publish: $(build.sourcesdirectory)
+    artifact: drop
