@@ -3,7 +3,6 @@ parameters:
 
 jobs:
 - job: build
-  displayName: Build Console
 
   pool:
     vmImage: 'ubuntu-latest'
