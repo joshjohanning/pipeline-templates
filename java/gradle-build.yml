@@ -1,5 +1,28 @@
 parameters:
-  buildConfiguration: release
-  
+  repoName: self
+
 jobs:
 - job: build
+  displayName: Build Console
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  #- checkout: ${{ parameters.repoName }}
+
+  - task: MavenAuthenticate@0
+    inputs:
+      artifactsFeeds: 'Java-test'
+
+  - task: Gradle@2
+    inputs:
+      workingDirectory: ''
+      gradleWrapperFile: 'gradlew'
+      gradleOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.8'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/TEST-*.xml'
+      tasks: 'build'
