@@ -1,6 +1,4 @@
 parameters:
-  repoName: self
-  publishing.publications.myPlatform.version: 3.2.2
   project.version: ''
   project.parent.project.version: ''
 
