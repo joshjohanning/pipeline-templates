@@ -20,8 +20,6 @@ jobs:
     inputs:
       artifactsFeeds: 'Java-test'
 
-  - script: echo $(Build.BuildNumber)
-
   - task: Gradle@2
     inputs:
       workingDirectory: ''
