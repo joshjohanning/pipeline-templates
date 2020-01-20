@@ -25,7 +25,7 @@ jobs:
   - task: Gradle@2
     inputs:
       workingDirectory: ''
-      options: '-P$(Build.BuildNumber)'
+      options: 'PprojVersion=$(Build.BuildNumber)'
       gradleWrapperFile: 'gradlew'
       gradleOptions: '-Xmx3072m'
       javaHomeOption: 'JDKVersion'
