@@ -10,11 +10,11 @@ jobs:
 
   steps:
 
-  - task: ReplaceTokens@1
-    inputs:
-      sourcePath: 
-      filePattern: 'build.gradle'
-      tokenRegex: '\${(\w+.\w+.\w+.\w+)}'
+#  - task: ReplaceTokens@1
+#    inputs:
+#      sourcePath: 
+#      filePattern: 'build.gradle'
+#      tokenRegex: '\${(\w+.\w+.\w+.\w+)}'
 
   - task: MavenAuthenticate@0
     inputs:
