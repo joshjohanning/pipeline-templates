@@ -22,7 +22,7 @@ jobs:
       dockerfile: ${{ parameters.dockerfilePath }}
       containerRegistry: ${{ parameters.dockerRegistryServiceConnection }}
       tags: |
-      ${{ parameters.tag }}
+        ${{ parameters.tag }}
           
   - upload: manifests
     artifact: manifests
