@@ -67,7 +67,7 @@ jobs:
             action: createSecret
             secretName: ${{ parameters.imagePullSecret }}
             namespace: ${{ parameters.k8sNamespaceForPR }}
-            dockerRegistryEndpoint: $${{ parameters.dockerRegistryServiceConnection }}
+            dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
       
         - task: KubernetesManifest@0
           displayName: Deploy to the new namespace in the Kubernetes cluster
