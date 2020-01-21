@@ -4,14 +4,15 @@ parameters:
     containerRegistry: ''
     dockerRegistryServiceConnection: ''
     tag: '$(Build.BuildId)'
+    pool: 
+      vmImage: 'ubuntu-latest'
     
     
 jobs:
 - job: build
   displayName: Docker build
 
-  pool:
-    vmImage: 'ubuntu-latest'
+  pool: ${{ parameters.pool }}
 
   steps:
   - task: Docker@2
