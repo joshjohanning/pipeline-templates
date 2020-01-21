@@ -6,23 +6,23 @@ parameters:
     tag: '$(Build.BuildId)'
     
     
-  jobs:
-  - job: build
-    displayName: Docker build
+jobs:
+- job: build
+  displayName: Docker build
 
-    pool:
-      vmImage: 'ubuntu-latest'
+  pool:
+    vmImage: 'ubuntu-latest'
 
-    steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: ${{ parameters.imageRepository }}
-        dockerfile: ${{ parameters.dockerfilePath }}
-        containerRegistry: ${{ parameters.dockerRegistryServiceConnection }}
-        tags: |
-        ${{ parameters.tag }}
-            
-    - upload: manifests
-      artifact: manifests
+  steps:
+  - task: Docker@2
+    displayName: Build and push an image to container registry
+    inputs:
+      command: buildAndPush
+      repository: ${{ parameters.imageRepository }}
+      dockerfile: ${{ parameters.dockerfilePath }}
+      containerRegistry: ${{ parameters.dockerRegistryServiceConnection }}
+      tags: |
+      ${{ parameters.tag }}
+          
+  - upload: manifests
+    artifact: manifests
