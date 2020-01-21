@@ -15,8 +15,7 @@ jobs:
   condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')))
   displayName: Deploy
 
-  pool:
-    vmImage: ${{ parameters.pool }}
+  pool: ${{ parameters.pool }}
 
   environment: 'soccerjoshj07pipelinesjavascriptdocker.default'
   
@@ -46,8 +45,7 @@ jobs:
 - deployment: DeployPullRequest
   displayName: Deploy Pull request
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/pull/'))
-  pool:
-    vmImage: ${{ parameters.pool }}
+  pool: ${{ parameters.pool }}
   
   environment: 'soccerjoshj07pipelinesjavascriptdocker.${{ parameters.k8sNamespaceForPR }}'
   strategy:
