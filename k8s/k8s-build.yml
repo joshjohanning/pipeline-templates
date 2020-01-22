@@ -24,6 +24,7 @@ jobs:
       containerRegistry: ${{ parameters.dockerRegistryServiceConnection }}
       tags: |
         ${{ parameters.tag }}
+        latest
           
   - upload: manifests
     artifact: manifests
