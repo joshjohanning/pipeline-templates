@@ -8,12 +8,6 @@ parameters:
   buildContainerTag: '375'
   buildContainerEndpoint: 'azdocontainerjobagent'
 
-resources:
-  containers:
-  - container: ${{ parameters.buildContainerId }}
-    image: ${{ parameters.buildContainerImage }}:${{ parameters.buildContainerTag }}
-    endpoint: ${{ parameters.buildContainerEndpoint }}
-
 jobs:
 - job: build
   displayName: Build Console
