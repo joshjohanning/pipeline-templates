@@ -21,6 +21,8 @@ jobs:
   pool:
     vmImage: 'ubuntu-latest'
 
+  container: ${{ parameters.buildContainerId }}
+
   steps:
   - checkout: ${{ parameters.repoName }}
 
