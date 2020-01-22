@@ -4,9 +4,6 @@ parameters:
   runBuild: true
   #buildContainerVars
   buildContainerId: 'azdocontainerjobagent'
-  buildContainerImage: 'azdocontainerjobagent.azurecr.io/soccerjoshjazdocontainerjobagent'
-  buildContainerTag: '375'
-  buildContainerEndpoint: 'azdocontainerjobagent'
 
 jobs:
 - job: build
