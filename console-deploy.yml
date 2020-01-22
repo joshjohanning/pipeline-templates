@@ -1,8 +1,8 @@
 parameters:
   repoName: self
   azureSubscription: ''
-  storage: ''
-  containerName: ''
+  storageAccount: ''
+  storageAccountContainerName: ''
 
 jobs:
 - deployment: DeployApp
@@ -21,5 +21,5 @@ jobs:
               SourcePath: '$(Pipeline.Workspace)'
               azureSubscription: '${{ parameters.azureSubscription }}'
               Destination: 'AzureBlob'
-              storage: '${{ parameters.storage }}'
-              ContainerName: '${{ parameters.containerName }}'
+              storageAccount: '${{ parameters.storage }}'
+              storageAccountContainerName: '${{ parameters.containerName }}'
