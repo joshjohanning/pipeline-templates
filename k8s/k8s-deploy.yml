@@ -55,7 +55,7 @@ jobs:
         - reviewApp: default
 
         - bash: |
-            ${{ format('k8snamespace=$(echo "{0}" | tr "[:upper:]" "[:lower:]")
+            ${{ format('k8snamespace=$(echo "{0}" | tr "[:upper:]" "[:lower:]" | tr -d "-")
             echo "##vso[task.setvariable variable=k8snamespace]$k8snamespace"',
                 parameters.k8sNamespaceForPR ) }}
           displayName: Convert branch namespace to lower case
