@@ -65,21 +65,21 @@ jobs:
           inputs:
             command: apply
             useConfigurationFile: true
-            inline: '{ "kind": "Namespace", "apiVersion": "v1", "metadata": { "name": "$(k8sNamespaceForPR)" }}'
+            inline: '{ "kind": "Namespace", "apiVersion": "v1", "metadata": { "name": "$(k8snamespace)" }}'
 
         - task: KubernetesManifest@0
           displayName: Create imagePullSecret
           inputs:
             action: createSecret
             secretName: ${{ parameters.imagePullSecret }}
-            namespace: $(k8sNamespaceForPR)
+            namespace: $(k8snamespace)
             dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
       
         - task: KubernetesManifest@0
           displayName: Deploy to the new namespace in the Kubernetes cluster
           inputs:
             action: deploy
-            namespace: $(k8sNamespaceForPR)
+            namespace: $(k8snamespace)
             manifests: |
               $(Pipeline.Workspace)/manifests/deployment.yml
               $(Pipeline.Workspace)/manifests/service.yml
@@ -94,7 +94,7 @@ jobs:
           continueOnError: true
           inputs:
             command: get
-            namespace: $(k8sNamespaceForPR)
+            namespace: $(k8snamespace)
             arguments: svc
             outputFormat: jsonpath='http://{.items[0].status.loadBalancer.ingress[0].ip}:{.items[0].spec.ports[0].port}'
           
