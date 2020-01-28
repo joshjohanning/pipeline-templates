@@ -1,6 +1,7 @@
 parameters:
   project.version: ''
   project.parent.project.version: ''
+  artifactoryTarget: ''
 
 jobs:
 - job: Build
@@ -42,7 +43,7 @@ jobs:
           "files": [
             {
               "pattern": "**/*.jar",
-              "target": "gradle-dev"
+              "target": "${{ parameters.artifactoryTarget }}"
             }
           ]
         }
