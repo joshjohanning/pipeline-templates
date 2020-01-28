@@ -33,6 +33,21 @@ jobs:
       testResultsFiles: '**/TEST-*.xml'
       tasks: 'clean build'
 
+  - task: ArtifactoryGenericUpload@1
+    inputs:
+      artifactoryService: 'AritfactoryProDemo'
+      specSource: 'taskConfiguration'
+      fileSpec: |
+        {
+          "files": [
+            {
+              "pattern": "**/*.jar",
+              "target": "gradle-dev"
+            }
+          ]
+        }
+      failNoOp: true
+
   - task: ArtifactoryMaven@1
     inputs:
       mavenPomFile: 'papi-models/build/core-models-api-$(build.buildnumber).pom'
