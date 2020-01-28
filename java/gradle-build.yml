@@ -35,7 +35,7 @@ jobs:
 
   - task: ArtifactoryMaven@1
     inputs:
-      mavenPomFile: 'papi-models/build/core-models-api-$(build.buldernumber).pom'
+      mavenPomFile: 'papi-models/build/core-models-api-$(build.buildnumber).pom'
       goals: 'install'
       artifactoryResolverService: 'AritfactoryProDemo'
       targetResolveReleaseRepo: 'gradle-release'
