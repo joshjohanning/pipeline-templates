@@ -33,7 +33,7 @@ jobs:
       testResultsFiles: '**/TEST-*.xml'
       tasks: 'clean build'
 
-    - task: ArtifactoryMaven@1
+  - task: ArtifactoryMaven@1
     inputs:
       mavenPomFile: 'api-models/build/core-models-api-$(build.buldernumber).pom'
       goals: 'install'
