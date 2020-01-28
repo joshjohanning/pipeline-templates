@@ -34,15 +34,15 @@ jobs:
       tasks: 'clean build'
 
   - task: ArtifactoryMaven@1
-      inputs:
-        mavenPomFile: 'papi-models/build/core-models-api-$(build.buldernumber).pom'
-        goals: 'install'
-        artifactoryResolverService: 'AritfactoryProDemo'
-        targetResolveReleaseRepo: 'gradle-release'
-        targetResolveSnapshotRepo: 'gradle-dev'
-        artifactoryDeployService: 'AritfactoryProDemo'
-        targetDeployReleaseRepo: 'gradle-release'
-        targetDeploySnapshotRepo: 'gradle-dev'
+    inputs:
+      mavenPomFile: 'papi-models/build/core-models-api-$(build.buldernumber).pom'
+      goals: 'install'
+      artifactoryResolverService: 'AritfactoryProDemo'
+      targetResolveReleaseRepo: 'gradle-release'
+      targetResolveSnapshotRepo: 'gradle-dev'
+      artifactoryDeployService: 'AritfactoryProDemo'
+      targetDeployReleaseRepo: 'gradle-release'
+      targetDeploySnapshotRepo: 'gradle-dev'
 
   - publish: $(build.sourcesdirectory)
     artifact: drop
