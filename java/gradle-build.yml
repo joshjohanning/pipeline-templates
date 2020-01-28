@@ -33,5 +33,16 @@ jobs:
       testResultsFiles: '**/TEST-*.xml'
       tasks: 'clean build'
 
+    - task: ArtifactoryMaven@1
+    inputs:
+      mavenPomFile: 'api-models/build/core-models-api-$(build.buldernumber).pom'
+      goals: 'install'
+      artifactoryResolverService: 'Jfrog'
+      targetResolveReleaseRepo: 'gradle'
+      targetResolveSnapshotRepo: 'gradle'
+      artifactoryDeployService: 'Jfrog'
+      targetDeployReleaseRepo: 'gradle'
+      targetDeploySnapshotRepo: 'gradle'
+
   - publish: $(build.sourcesdirectory)
     artifact: drop
