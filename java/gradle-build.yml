@@ -34,31 +34,5 @@ jobs:
       testResultsFiles: '**/TEST-*.xml'
       tasks: 'clean build'
 
-  - task: ArtifactoryGenericUpload@1
-    inputs:
-      artifactoryService: 'AritfactoryProDemo'
-      specSource: 'taskConfiguration'
-      fileSpec: |
-        {
-          "files": [
-            {
-              "pattern": "**/*.jar",
-              "target": "${{ parameters.artifactoryTarget }}"
-            }
-          ]
-        }
-      failNoOp: true
-
-#  - task: ArtifactoryMaven@1
-#    inputs:
-#      mavenPomFile: 'papi-models/build/core-models-api-$(build.buildnumber).pom'
-#      goals: 'install'
-#      artifactoryResolverService: 'AritfactoryProDemo'
-#      targetResolveReleaseRepo: 'gradle-release'
-#      targetResolveSnapshotRepo: 'gradle-dev'
-#      artifactoryDeployService: 'AritfactoryProDemo'
-#      targetDeployReleaseRepo: 'gradle-release'
-#      targetDeploySnapshotRepo: 'gradle-dev'
-
   - publish: $(build.sourcesdirectory)
     artifact: drop
