@@ -1,7 +1,5 @@
 parameters:
-  project.version: ''
-  project.parent.project.version: ''
-  artifactoryTarget: ''
+  gradleTasks: 'clean publish'
 
 jobs:
 - job: Build
@@ -10,13 +8,6 @@ jobs:
     vmImage: 'ubuntu-latest'
 
   steps:
-
-#  - task: ReplaceTokens@1
-#    inputs:
-#      sourcePath: 
-#      filePattern: 'build.gradle'
-#      tokenRegex: '\${(\w+.\w+.\w+.\w+)}'
-
   - task: MavenAuthenticate@0
     inputs:
       artifactsFeeds: 'Java-test'
@@ -32,7 +23,7 @@ jobs:
       jdkArchitectureOption: 'x64'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
-      tasks: 'clean publish'
+      tasks: '${{ parameters.gradleTasks }}'
 
   - publish: $(build.sourcesdirectory)
     artifact: drop
