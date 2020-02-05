@@ -23,7 +23,7 @@ jobs:
         displayName: Build and push an image to container registry
         inputs:
           command: buildAndPush
-          repository: ${{ parameters.imageRepository }}-${{ s.serviceName }}
+          repository: ${{ s.imageRepository }}-${{ s.serviceName }}
           dockerfile: ${{ s.projectPath }}/Dockerfile
           containerRegistry: ${{ parameters.dockerRegistryServiceConnection }}
           tags: |
