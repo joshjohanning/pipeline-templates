@@ -1,0 +1,33 @@
+parameters:
+    imageRepository: ''
+    dockerRegistryServiceConnection: ''
+    tag: '$(Build.BuildId)'
+    services: []
+    pool: 
+      vmImage: 'ubuntu-latest'
+    
+    
+jobs:
+
+- job: Build
+  displayName: Build
+  
+  pool: ${{ parameters.pool }}
+  steps: 
+
+  # Kubernetes bake and manifest deploy - deploy the service if skip = false
+  - ${{ each s in parameters.services }}:
+    - ${{ if eq(s.skip, 'false') }}:
+
+      - task: Docker@2
+        displayName: Build and push an image to container registry
+        inputs:
+          command: buildAndPush
+          repository: ${{ parameters.imageRepository }}-${{ s.serviceName }}
+          dockerfile: ${{ s.projectPath }}/Dockerfile
+          containerRegistry: ${{ parameters.dockerRegistryServiceConnection }}
+          tags: |
+            ${{ parameters.tag }}
+
+        - publish: ${{ s.projectPath }}/charts/${{ s.serviceName }}
+          artifact: charts-${{ s.serviceName }}
