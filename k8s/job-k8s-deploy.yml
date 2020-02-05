@@ -4,7 +4,6 @@ parameters:
     dockerRegistryServiceConnection: ''
     tag: '$(Build.BuildId)'
     imagePullSecret: ''
-    ingress.enabled: false
     environment: ''
     services: []
     namespace: ''
