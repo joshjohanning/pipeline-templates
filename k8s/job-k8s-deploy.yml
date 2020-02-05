@@ -7,6 +7,7 @@ parameters:
     ingress.enabled: false
     environment: ''
     services: []
+    namespace: ''
     pool: 
       vmImage: 'ubuntu-latest'
     
@@ -37,20 +38,20 @@ jobs:
           - ${{ if eq(s.skip, 'false') }}:
         
             - task: KubernetesManifest@0
-              displayName: Bake ${{ parameters.serviceName }} manifest
-              name: bake_${{ parameters.serviceName }}
+              displayName: Bake ${{ s.serviceName }} manifest
+              name: bake_${{ s.serviceName }}
               inputs:
                 action: bake
-                namespace: $(namespace)
-                helmChart: $(Pipeline.Workspace)/charts-${{ parameters.serviceName }}
-                releaseName: ${{ parameters.serviceName }}
+                namespace: ${{ parameters.namespace }}
+                helmChart: $(Pipeline.Workspace)/charts-${{ s.serviceName }}
+                releaseName: ${{ s.serviceName }}
                 overrides: |
-                  ingress.enabled:${{ parameters.ingress.enabled }}
-                  image.repository:${{ parameters.containerRegistry }}/${{ parameters.imageRepository }}
-                  image.tag:${{ parameters.tag }}
+                  ingress.enabled:${{ s.ingress.enabled }}
+                  image.repository:${{ s.containerRegistry }}/${{ s.imageRepository }}
+                  image.tag:${{ s.tag }}
               
             - task: KubernetesManifest@0
-              displayName: Deploy ${{ parameters.serviceName }} to k8s
+              displayName: Deploy ${{ s.serviceName }} to k8s
               inputs:
-                manifests: $(bake_${{ parameters.serviceName }}.manifestsBundle)
-                imagePullSecrets: ${{ parameters.imagePullSecret }}
+                manifests: $(bake_${{ s.serviceName }}.manifestsBundle)
+                imagePullSecrets: ${{ s.imagePullSecret }}
