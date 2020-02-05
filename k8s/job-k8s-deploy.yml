@@ -9,6 +9,10 @@ parameters:
     namespace: ''
     pool: 
       vmImage: 'ubuntu-latest'
+    overrides: |
+      ingress.enabled:false
+      image.repository:${{ parameters.containerRegistry }}/${{ parameters.imageRepository }}-${{ s.serviceName }}
+      image.tag:${{ parameters.tag }}
     
     
 jobs:
@@ -44,10 +48,11 @@ jobs:
                 namespace: ${{ parameters.namespace }}
                 helmChart: $(Pipeline.Workspace)/charts-${{ s.serviceName }}
                 releaseName: ${{ s.serviceName }}
-                overrides: |
-                  ingress.enabled:${{ s.ingress.enabled }}
-                  image.repository:${{ parameters.containerRegistry }}/${{ s.imageRepository }}
-                  image.tag:${{ parameters.tag }}
+                overrides: ${{ parameters.overrides }}
+                # overrides: |
+                #   ingress.enabled:${{ s.ingress.enabled }}
+                #   image.repository:${{ parameters.containerRegistry }}/${{ s.imageRepository }}
+                #   image.tag:${{ parameters.tag }}
               
             - task: KubernetesManifest@0
               displayName: Deploy ${{ s.serviceName }} to k8s
