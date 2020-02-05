@@ -47,11 +47,11 @@ jobs:
                 releaseName: ${{ s.serviceName }}
                 overrides: |
                   ingress.enabled:${{ s.ingress.enabled }}
-                  image.repository:${{ s.containerRegistry }}/${{ s.imageRepository }}
-                  image.tag:${{ s.tag }}
+                  image.repository:${{ parameters.containerRegistry }}/${{ s.imageRepository }}
+                  image.tag:${{ parameters.tag }}
               
             - task: KubernetesManifest@0
               displayName: Deploy ${{ s.serviceName }} to k8s
               inputs:
                 manifests: $(bake_${{ s.serviceName }}.manifestsBundle)
-                imagePullSecrets: ${{ s.imagePullSecret }}
+                imagePullSecrets: ${{ parameters.imagePullSecret }}
