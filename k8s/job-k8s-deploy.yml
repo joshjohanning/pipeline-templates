@@ -1,0 +1,56 @@
+parameters:
+    imageRepository: ''
+    containerRegistry: ''
+    dockerRegistryServiceConnection: ''
+    tag: '$(Build.BuildId)'
+    imagePullSecret: ''
+    ingress.enabled: false
+    environment: ''
+    services: []
+    pool: 
+      vmImage: 'ubuntu-latest'
+    
+    
+jobs:
+
+- deployment: Deploy
+  condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')))
+  displayName: Deploy
+
+  pool: ${{ parameters.pool }}
+
+  environment: ${{ parameters.environment }}
+  
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - task: KubernetesManifest@0
+          displayName: Create imagePullSecret
+          inputs:
+            action: createSecret
+            secretName: ${{ parameters.imagePullSecret }}
+            dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
+
+        # Kubernetes bake and manifest deploy - deploy the service if skip = false
+        - ${{ each s in parameters.services }}:
+          - ${{ if eq(s.skip, 'false') }}:
+        
+            - task: KubernetesManifest@0
+              displayName: Bake ${{ parameters.serviceName }} manifest
+              name: bake_${{ parameters.serviceName }}
+              inputs:
+                action: bake
+                namespace: $(namespace)
+                helmChart: $(Pipeline.Workspace)/charts-${{ parameters.serviceName }}
+                releaseName: ${{ parameters.serviceName }}
+                overrides: |
+                  ingress.enabled:${{ parameters.ingress.enabled }}
+                  image.repository:${{ parameters.containerRegistry }}/${{ parameters.imageRepository }}
+                  image.tag:${{ parameters.tag }}
+              
+            - task: KubernetesManifest@0
+              displayName: Deploy ${{ parameters.serviceName }} to k8s
+              inputs:
+                manifests: $(bake_${{ parameters.serviceName }}.manifestsBundle)
+                imagePullSecrets: ${{ parameters.imagePullSecret }}
