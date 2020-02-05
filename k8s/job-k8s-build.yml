@@ -29,5 +29,5 @@ jobs:
           tags: |
             ${{ parameters.tag }}
 
-        - publish: ${{ s.projectPath }}/charts/${{ s.serviceName }}
-          artifact: charts-${{ s.serviceName }}
+      - publish: ${{ s.projectPath }}/charts/${{ s.serviceName }}
+        artifact: charts-${{ s.serviceName }}
