@@ -9,10 +9,6 @@ parameters:
     namespace: ''
     pool: 
       vmImage: 'ubuntu-latest'
-    overrides: |
-      ingress.enabled:false
-      image.repository:${{ parameters.containerRegistry }}/${{ parameters.imageRepository }}-${{ s.serviceName }}
-      image.tag:${{ parameters.tag }}
     
     
 jobs:
@@ -48,7 +44,7 @@ jobs:
                 namespace: ${{ parameters.namespace }}
                 helmChart: $(Pipeline.Workspace)/charts-${{ s.serviceName }}
                 releaseName: ${{ s.serviceName }}
-                overrides: ${{ parameters.overrides }}
+                overrides: ${{ s.overrides }}
                 # overrides: |
                 #   ingress.enabled:${{ s.ingress.enabled }}
                 #   image.repository:${{ parameters.containerRegistry }}/${{ s.imageRepository }}
