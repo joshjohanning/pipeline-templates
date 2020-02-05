@@ -1,0 +1,109 @@
+parameters:
+    imageRepository: ''
+    containerRegistry: ''
+    dockerRegistryServiceConnection: ''
+    tag: '$(Build.BuildId)'
+    imagePullSecret: ''
+    k8sNamespaceForPR: ''
+    pool: 
+      vmImage: 'ubuntu-latest'
+    
+    
+jobs:
+
+- deployment: Deploy
+  condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')))
+  displayName: Deploy
+
+  pool: ${{ parameters.pool }}
+
+  environment: 'soccerjoshj07pipelinesjavascriptdocker.default'
+  
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - task: KubernetesManifest@0
+          displayName: Create imagePullSecret
+          inputs:
+            action: createSecret
+            secretName: ${{ parameters.imagePullSecret }}
+            dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
+          
+        - task: KubernetesManifest@0
+          displayName: Deploy to Kubernetes cluster
+          inputs:
+            action: deploy
+            manifests: |
+              $(Pipeline.Workspace)/manifests/deployment.yml
+              $(Pipeline.Workspace)/manifests/service.yml
+            imagePullSecrets: |
+              ${{ parameters.imagePullSecret }}
+            containers: |
+              ${{ parameters.containerRegistry }}/${{ parameters.imageRepository }}:${{ parameters.tag }}
+
+- deployment: DeployPullRequest
+  displayName: Deploy Pull request
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/pull/'))
+  pool: ${{ parameters.pool }}
+  
+  environment: 'soccerjoshj07pipelinesjavascriptdocker.${{ parameters.k8sNamespaceForPR }}'
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - reviewApp: default
+
+        - bash: |
+            ${{ format('k8snamespace=$(echo "{0}" | tr "[:upper:]" "[:lower:]" | tr -d "-")
+            echo "##vso[task.setvariable variable=k8snamespace]$k8snamespace"',
+                parameters.k8sNamespaceForPR ) }}
+          displayName: Convert branch namespace to lower case
+
+        - task: Kubernetes@1
+          displayName: 'Create a new namespace for the pull request'
+          inputs:
+            command: apply
+            useConfigurationFile: true
+            inline: '{ "kind": "Namespace", "apiVersion": "v1", "metadata": { "name": "$(k8snamespace)" }}'
+
+        - task: KubernetesManifest@0
+          displayName: Create imagePullSecret
+          inputs:
+            action: createSecret
+            secretName: ${{ parameters.imagePullSecret }}
+            namespace: $(k8snamespace)
+            dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
+      
+        - task: KubernetesManifest@0
+          displayName: Deploy to the new namespace in the Kubernetes cluster
+          inputs:
+            action: deploy
+            namespace: $(k8snamespace)
+            manifests: |
+              $(Pipeline.Workspace)/manifests/deployment.yml
+              $(Pipeline.Workspace)/manifests/service.yml
+            imagePullSecrets: |
+              ${{ parameters.imagePullSecret }}
+            containers: |
+              ${{ parameters.containerRegistry }}/${{ parameters.imageRepository }}:${{ parameters.tag }}
+      
+        - task: Kubernetes@1
+          name: get
+          displayName: 'Get services in the new namespace'
+          continueOnError: true
+          inputs:
+            command: get
+            namespace: $(k8snamespace)
+            arguments: svc
+            outputFormat: jsonpath='http://{.items[0].status.loadBalancer.ingress[0].ip}:{.items[0].spec.ports[0].port}'
+          
+        # Getting the IP of the deployed service and writing it to a variable for posing comment
+        - script: |
+            url="$(get.KubectlOutput)"
+            message="Your review app has been deployed"
+            if [ ! -z "$url" -a "$url" != "http://:" ] 
+            then
+              message="${message} and is available at $url.<br><br>[Learn More](https://aka.ms/testwithreviewapps) about how to test and provide feedback for the app."
+            fi
+            echo "##vso[task.setvariable variable=GITHUB_COMMENT]$message"
