@@ -31,3 +31,4 @@ jobs:
 
       - publish: ${{ s.projectPath }}/charts/${{ s.serviceName }}
         artifact: charts-${{ s.serviceName }}
+        displayName: Publish charts-${{ s.serviceName }}
