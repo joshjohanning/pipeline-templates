@@ -10,10 +10,11 @@ parameters:
     pool: 
       vmImage: 'ubuntu-latest'
     
-    
+variables:
+  - group: ${{ parameters.varGroup }}
+
 jobs:
 
-- group: ${{ parameters.varGroup }}
 - deployment: Deploy
   condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')))
   displayName: Deploy
