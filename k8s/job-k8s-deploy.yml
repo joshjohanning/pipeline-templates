@@ -35,7 +35,8 @@ jobs:
             secretName: ${{ parameters.imagePullSecret }}
             dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
 
-        - task: ReplaceTokens@1
+        - task: 9240b5c1-a1b2-4799-9325-e071c63236fb@1
+          displayName: Replace tokens in release.yaml
           inputs:
             sourcePath: '$(Pipeline.Workspace)'
             filePattern: '**/*.release.yaml'
