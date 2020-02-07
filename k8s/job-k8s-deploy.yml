@@ -22,8 +22,8 @@ jobs:
 
   environment: ${{ parameters.environment }}
 
-  #variables:
-  #- group: ${{ parameters.varGroup }}
+  variables:
+  - group: ${{ parameters.varGroup }}
   
   strategy:
     runOnce:
