@@ -22,13 +22,14 @@ jobs:
 
   environment: ${{ parameters.environment }}
 
-  variables:
-  - group: ${{ parameters.varGroup }}
+  #variables:
+  #- group: ${{ parameters.varGroup }}
   
   strategy:
     runOnce:
       deploy:
         steps:
+        - script: echo $(databaseName)
         - task: KubernetesManifest@0
           displayName: Create imagePullSecret
           inputs:
