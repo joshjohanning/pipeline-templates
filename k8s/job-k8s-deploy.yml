@@ -13,6 +13,7 @@ parameters:
     
 jobs:
 
+- group: ${{ parameters.varGroup }}
 - deployment: Deploy
   condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')))
   displayName: Deploy
@@ -32,6 +33,12 @@ jobs:
             secretName: ${{ parameters.imagePullSecret }}
             dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
 
+        - task: ReplaceTokens@1
+          inputs:
+            sourcePath: '$(Pipeline.Workspace)'
+            filePattern: '**/*.release.yaml'
+            tokenRegex: '__(\w+)__'
+
         # Kubernetes bake and manifest deploy - deploy the service if skip = false
         - ${{ each s in parameters.services }}:
           - ${{ if eq(s.skip, 'false') }}:
@@ -45,6 +52,7 @@ jobs:
                 helmChart: $(Pipeline.Workspace)/charts-${{ s.serviceName }}
                 releaseName: ${{ s.serviceName }}
                 overrides: ${{ s.overrides }}
+                overrideFiles: '$(Pipeline.Workspace)/charts-${{ s.serviceName }}/values.release.yaml'
                 # overrides: |
                 #   ingress.enabled:${{ s.ingress.enabled }}
                 #   image.repository:${{ parameters.containerRegistry }}/${{ s.imageRepository }}
