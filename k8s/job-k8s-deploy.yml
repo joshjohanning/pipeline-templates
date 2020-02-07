@@ -7,6 +7,7 @@ parameters:
     environment: ''
     services: []
     namespace: ''
+    varGroup: ''
     pool: 
       vmImage: 'ubuntu-latest'
     
