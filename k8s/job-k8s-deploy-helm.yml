@@ -4,6 +4,7 @@ parameters:
     dockerRegistryServiceConnection: ''
     tag: '$(Build.BuildId)'
     imagePullSecret: ''
+    kubernetesServiceConnection: ''
     environment: ''
     services: []
     namespace: ''
@@ -39,6 +40,7 @@ jobs:
             action: createSecret
             secretName: ${{ parameters.imagePullSecret }}
             dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
+            kubernetesServiceConnection: ${{ parameters.kubernetesServiceConnection }}
 
         - task: 9240b5c1-a1b2-4799-9325-e071c63236fb@1
           displayName: Replace tokens in release.yaml
@@ -53,6 +55,8 @@ jobs:
 
             - task: HelmDeploy@0
               inputs:
+                connectionType: 'Kubernetes Service Connection'
+                kubernetesServiceConnection: ${{ parameters.kubernetesServiceConnection }}
                 namespace: '${{ parameters.namespace }}'
                 command: 'upgrade'
                 chartType: 'FilePath'
