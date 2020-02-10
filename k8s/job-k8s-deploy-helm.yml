@@ -1,0 +1,85 @@
+parameters:
+    imageRepository: ''
+    containerRegistry: ''
+    dockerRegistryServiceConnection: ''
+    tag: '$(Build.BuildId)'
+    imagePullSecret: ''
+    environment: ''
+    services: []
+    namespace: ''
+    varGroup: ''
+    pool: 
+      vmImage: 'ubuntu-latest'
+    
+    
+jobs:
+
+- deployment: Deploy
+  condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')))
+  displayName: Deploy
+
+  pool: ${{ parameters.pool }}
+
+  environment: ${{ parameters.environment }}
+
+  variables:
+  - group: ${{ parameters.varGroup }}
+  
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - task: HelmInstaller@1
+          inputs:
+            helmVersionToInstall: 'latest'
+
+        - task: KubernetesManifest@0
+          displayName: Create imagePullSecret
+          inputs:
+            action: createSecret
+            secretName: ${{ parameters.imagePullSecret }}
+            dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
+
+        - task: 9240b5c1-a1b2-4799-9325-e071c63236fb@1
+          displayName: Replace tokens in release.yaml
+          inputs:
+            sourcePath: '$(Pipeline.Workspace)'
+            filePattern: '**/*.release.yaml'
+            tokenRegex: '__(\w+)__'
+
+        # Kubernetes bake and manifest deploy - deploy the service if skip = false
+        - ${{ each s in parameters.services }}:
+          - ${{ if eq(s.skip, 'false') }}:
+
+            - task: HelmDeploy@0
+              inputs:
+                connectionType: 'Kubernetes Service Connection'
+                kubernetesServiceConnection: 'soccerjoshj07sub-phippyaks-aks-phippyaksdemo-phippyandfriends-1581356635942'
+                namespace: '${{ parameters.namespace }}'
+                command: 'upgrade'
+                chartType: 'FilePath'
+                chartPath: '$(Pipeline.Workspace)/charts-${{ s.serviceName }}'
+                releaseName: '${{ s.serviceName }}'
+                overrideValues: '${{ s.overrides }}'
+                valueFile: '$(Pipeline.Workspace)/charts-${{ s.serviceName }}/values.release.yaml'
+        
+            # - task: KubernetesManifest@0
+            #   displayName: Bake ${{ s.serviceName }} manifest
+            #   name: bake_${{ s.serviceName }}
+            #   inputs:
+            #     action: bake
+            #     namespace: ${{ parameters.namespace }}
+            #     helmChart: $(Pipeline.Workspace)/charts-${{ s.serviceName }}
+            #     releaseName: ${{ s.serviceName }}
+            #     overrides: ${{ s.overrides }}
+            #     overrideFiles: '$(Pipeline.Workspace)/charts-${{ s.serviceName }}/values.release.yaml'
+                # overrides: |
+                #   ingress.enabled:${{ s.ingress.enabled }}
+                #   image.repository:${{ parameters.containerRegistry }}/${{ s.imageRepository }}
+                #   image.tag:${{ parameters.tag }}
+              
+            # - task: KubernetesManifest@0
+            #   displayName: Deploy ${{ s.serviceName }} to k8s
+            #   inputs:
+            #     manifests: $(bake_${{ s.serviceName }}.manifestsBundle)
+            #     imagePullSecrets: ${{ parameters.imagePullSecret }}
