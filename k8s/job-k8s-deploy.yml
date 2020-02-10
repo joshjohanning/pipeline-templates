@@ -29,7 +29,6 @@ jobs:
     runOnce:
       deploy:
         steps:
-        - script: echo $(databaseName)
         - task: KubernetesManifest@0
           displayName: Create imagePullSecret
           inputs:
