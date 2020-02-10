@@ -54,8 +54,10 @@ jobs:
 
             - task: HelmDeploy@0
               inputs:
-                connectionType: 'Kubernetes Service Connection'
-                kubernetesServiceConnection: 'soccerjoshj07sub-phippyaks-aks-phippyaksdemo-phippyandfriends-1581356635942'
+                connectionType: 'Azure Resource Manager'
+                azureSubscription: 'Visual Studio Enterprise 1(4abc8ce7-bfa6-4312-89c7-2bc8c34eb820)'
+                azureResourceGroup: 'rg-phippyaks-demo'
+                kubernetesCluster: 'aks-phippyaksdemo-latest'
                 namespace: '${{ parameters.namespace }}'
                 command: 'upgrade'
                 chartType: 'FilePath'
