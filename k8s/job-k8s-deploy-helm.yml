@@ -49,6 +49,8 @@ jobs:
             filePattern: '**/*.release.yaml'
             tokenRegex: '__(\w+)__'
 
+        - script: echo $(imagePullSecret)
+
         # Kubernetes bake and manifest deploy - deploy the service if skip = false
         - ${{ each s in parameters.services }}:
           - ${{ if eq(s.skip, 'false') }}:
