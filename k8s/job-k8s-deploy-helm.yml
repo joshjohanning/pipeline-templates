@@ -1,6 +1,6 @@
 parameters:
     imageRepository: ''
-    containerRegistry: ''
+    #containerRegistry: ''
     dockerRegistryServiceConnection: ''
     tag: '$(Build.BuildId)'
     imagePullSecret: ''
