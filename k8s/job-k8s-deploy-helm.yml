@@ -11,6 +11,8 @@ parameters:
     varGroup: ''
     pool: 
       vmImage: 'ubuntu-latest'
+    helmVersion: '3.0.3'
+    appEnvironmentName: ''
     
     
 jobs:
@@ -25,6 +27,12 @@ jobs:
 
   variables:
   - group: ${{ parameters.varGroup }}
+  #These variables are used to replace the tokens in '**/values.release.yaml'
+  #When deploying multiple services, may have to put this inside the loop to replace tokens more correctly.
+  # - name: imageRepository
+  #   value: ${{ parameters.containerRegistry}}/${{ parameters.imageRepository }}
+  # - name: tag
+  #   value: ${{ parameters.tag }}
   
   strategy:
     runOnce:
@@ -32,7 +40,7 @@ jobs:
         steps:
         - task: HelmInstaller@1
           inputs:
-            helmVersionToInstall: 'latest'
+            helmVersionToInstall: ${{ parameters.helmVersion }}
 
         - task: KubernetesManifest@0
           displayName: Create imagePullSecret
@@ -46,10 +54,10 @@ jobs:
           displayName: Replace tokens in release.yaml
           inputs:
             sourcePath: '$(Pipeline.Workspace)'
-            filePattern: '**/*.release.yaml'
+            filePattern: '**/values.release.yaml'
             tokenRegex: '__(\w+)__'
 
-        # Kubernetes bake and manifest deploy - deploy the service if skip = false
+        # Helm deploy - deploy the service if skip = false
         - ${{ each s in parameters.services }}:
           - ${{ if eq(s.skip, 'false') }}:
 
@@ -65,6 +73,7 @@ jobs:
                 overrideValues: '${{ s.overrides }}'
                 valueFile: '$(Pipeline.Workspace)/charts-${{ s.serviceName }}/values.release.yaml'
         
+            # Kubernetes bake and manifest deploy - deploy the service if skip = false
             # - task: KubernetesManifest@0
             #   displayName: Bake ${{ s.serviceName }} manifest
             #   name: bake_${{ s.serviceName }}
