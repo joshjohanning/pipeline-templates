@@ -1,18 +1,21 @@
 parameters:
+    # replace tokens
+    appEnvironmentName: ''
     imageRepository: ''
     #containerRegistry: ''
-    dockerRegistryServiceConnection: ''
     tag: '$(Build.BuildId)'
     imagePullSecret: ''
+    varGroup: ''
+    # deployment endpoints
+    dockerRegistryServiceConnection: ''
     kubernetesServiceConnection: ''
     environment: ''
     services: []
     namespace: ''
-    varGroup: ''
+    #
+    helmVersion: '3.0.3'
     pool: 
       vmImage: 'ubuntu-latest'
-    helmVersion: '3.0.3'
-    appEnvironmentName: ''
     
     
 jobs:
@@ -25,6 +28,7 @@ jobs:
 
   environment: ${{ parameters.environment }}
 
+  #variable group to be used in replace tokens
   variables:
   - group: ${{ parameters.varGroup }}
   #These variables are used to replace the tokens in '**/values.release.yaml'
@@ -72,25 +76,3 @@ jobs:
                 releaseName: '${{ s.serviceName }}'
                 overrideValues: '${{ s.overrides }}'
                 valueFile: '$(Pipeline.Workspace)/charts-${{ s.serviceName }}/values.release.yaml'
-        
-            # Kubernetes bake and manifest deploy - deploy the service if skip = false
-            # - task: KubernetesManifest@0
-            #   displayName: Bake ${{ s.serviceName }} manifest
-            #   name: bake_${{ s.serviceName }}
-            #   inputs:
-            #     action: bake
-            #     namespace: ${{ parameters.namespace }}
-            #     helmChart: $(Pipeline.Workspace)/charts-${{ s.serviceName }}
-            #     releaseName: ${{ s.serviceName }}
-            #     overrides: ${{ s.overrides }}
-            #     overrideFiles: '$(Pipeline.Workspace)/charts-${{ s.serviceName }}/values.release.yaml'
-                # overrides: |
-                #   ingress.enabled:${{ s.ingress.enabled }}
-                #   image.repository:${{ parameters.containerRegistry }}/${{ s.imageRepository }}
-                #   image.tag:${{ parameters.tag }}
-              
-            # - task: KubernetesManifest@0
-            #   displayName: Deploy ${{ s.serviceName }} to k8s
-            #   inputs:
-            #     manifests: $(bake_${{ s.serviceName }}.manifestsBundle)
-            #     imagePullSecrets: ${{ parameters.imagePullSecret }}
