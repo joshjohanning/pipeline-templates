@@ -51,6 +51,7 @@ jobs:
           inputs:
             action: createSecret
             secretName: ${{ parameters.imagePullSecret }}
+            namespace: ${{ parameters.namespace }}
             dockerRegistryEndpoint: ${{ parameters.dockerRegistryServiceConnection }}
             kubernetesServiceConnection: ${{ parameters.kubernetesServiceConnection }}
 
