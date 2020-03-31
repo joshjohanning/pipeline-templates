@@ -1,21 +1,21 @@
 parameters:
-    # replace tokens
-    appEnvironmentName: ''
-    imageRepository: ''
-    #containerRegistry: ''
-    tag: '$(Build.BuildId)'
-    imagePullSecret: ''
-    varGroup: ''
-    # deployment endpoints
-    dockerRegistryServiceConnection: ''
-    kubernetesServiceConnection: ''
-    environment: ''
-    services: []
-    namespace: ''
-    #
-    helmVersion: '3.0.3'
-    pool: 
-      vmImage: 'ubuntu-latest'
+  # replace tokens
+  appEnvironmentName: ''
+  imageRepository: ''
+  #containerRegistry: ''
+  tag: '$(Build.BuildId)'
+  imagePullSecret: ''
+  varGroup: ''
+  # deployment endpoints
+  dockerRegistryServiceConnection: ''
+  kubernetesServiceConnection: ''
+  environment: ''
+  services: []
+  namespace: ''
+  #
+  helmVersion: '3.0.3'
+  pool: 
+    vmImage: 'ubuntu-latest'
     
     
 jobs:

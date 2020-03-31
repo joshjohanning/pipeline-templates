@@ -1,11 +1,11 @@
 parameters:
-    imageRepository: ''
-    dockerfilePath: '**/Dockerfile'
-    containerRegistry: ''
-    dockerRegistryServiceConnection: ''
-    tag: '$(Build.BuildId)'
-    pool: 
-      vmImage: 'ubuntu-latest'
+  imageRepository: ''
+  dockerfilePath: '**/Dockerfile'
+  containerRegistry: ''
+  dockerRegistryServiceConnection: ''
+  tag: '$(Build.BuildId)'
+  pool: 
+    vmImage: 'ubuntu-latest'
     
     
 jobs:

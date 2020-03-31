@@ -1,10 +1,10 @@
 parameters:
-    imageRepository: ''
-    dockerRegistryServiceConnection: ''
-    tag: '$(Build.BuildId)'
-    services: []
-    pool: 
-      vmImage: 'ubuntu-latest'
+  imageRepository: ''
+  dockerRegistryServiceConnection: ''
+  tag: '$(Build.BuildId)'
+  services: []
+  pool: 
+    vmImage: 'ubuntu-latest'
     
     
 jobs:

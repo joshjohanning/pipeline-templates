@@ -1,12 +1,12 @@
 parameters:
-    imageRepository: ''
-    containerRegistry: ''
-    dockerRegistryServiceConnection: ''
-    tag: '$(Build.BuildId)'
-    imagePullSecret: ''
-    k8sNamespaceForPR: ''
-    pool: 
-      vmImage: 'ubuntu-latest'
+  imageRepository: ''
+  containerRegistry: ''
+  dockerRegistryServiceConnection: ''
+  tag: '$(Build.BuildId)'
+  imagePullSecret: ''
+  k8sNamespaceForPR: ''
+  pool: 
+    vmImage: 'ubuntu-latest'
     
     
 jobs:
