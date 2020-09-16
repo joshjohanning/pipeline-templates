@@ -136,3 +136,6 @@ jobs:
 
     - publish: '$(Build.ArtifactStagingDirectory)'
       artifact: ${{ s.name }}
+
+    - publish: '$(Build.SourcesDirectory)/CoverageResults/Cobertura.xml'
+      artifact: ${{ s.name }}-codecoverage
