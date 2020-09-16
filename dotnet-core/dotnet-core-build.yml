@@ -100,7 +100,7 @@ jobs:
       - task: reportgenerator@4
         inputs:
           reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
-          targetdir: '$(Build.SourcesDirectory)/CoverageResults'
+          targetdir: '$(Build.ArtifactStagingDirectory)/CoverageResults'
         
       # - task: PublishCodeCoverageResults@1
       #   displayName: 'Publish code coverage report'
@@ -136,6 +136,3 @@ jobs:
 
     - publish: '$(Build.ArtifactStagingDirectory)'
       artifact: ${{ s.name }}
-
-    - publish: '$(Build.SourcesDirectory)/CoverageResults/Cobertura.xml'
-      artifact: ${{ s.name }}-codecoverage
