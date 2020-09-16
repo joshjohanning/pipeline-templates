@@ -1,0 +1,119 @@
+parameters:
+  environment: 'Dev'
+  services: []
+
+jobs:
+
+- ${{ each s in parameters.services }}:
+
+  - deployment: 
+    displayName: deploy ${{ s.name }}
+    pool:
+      vmImage: '${{ s.vmImage }}'
+
+    environment: ${{ s.environment }}
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          # saves time only downloading the artifact needed
+          - download: current
+            artifact: ${{ s.name }}
+        
+          - task: ExtractFiles@1
+            displayName: 'Extract files'
+            inputs:
+              archiveFilePatterns: '$(pipeline.workspace)/**/${{ s.name }}.zip'
+              destinationFolder: '$(Pipeline.Workspace)/${{ s.name }}/deploy'
+
+          - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+            displayName: 'Replace tokens'
+            inputs:
+              rootDirectory: '$(pipeline.workspace)'
+              targetFiles: '${{ s.replaceTokensTargetFiles }}'
+              escapeType: none
+              verbosity: detailed
+
+          # Run any IIS deployment(s)
+          - ${{ each i in s.iis }}:
+            - task: IISWebAppDeploymentOnMachineGroup@0
+              displayName: 'IIS Web App Deploy'
+              condition: and(succeeded(), eq('${{ s.runDeploy }}', true))
+              inputs:
+                WebSiteName: '${{ i.websiteName }}'
+                virtualApplication: '${{ i.virtualApplication }}'
+                Package: '$(Pipeline.Workspace)/${{ s.name }}/deploy'
+                RemoveAdditionalFilesFlag: true
+                TakeAppOfflineFlag: true
+
+          # Run any Azure deployment(s)
+          - ${{ each a in s.azure }}:
+            - task: AzureRmWebAppDeployment@4
+              displayName: 'Deploy Azure App Service'
+              name: webAppDeployment
+              condition: and(succeeded(), eq('${{ s.runDeploy }}', true))
+              inputs:
+                azureSubscription: '${{ a.azureSubscription }}'
+                appType: 'webApp'
+                WebAppName: '${{ a.websiteName }}'
+                deployToSlotOrASE: true
+                ResourceGroupName: '${{ a.resourceGroupName }}'
+                SlotName: '${{ a.slotName }}'
+                packageForLinux: '$(Pipeline.Workspace)/${{ s.name }}/deploy'
+                AppSettings: '${{ s.appSettingsEdits }}'
+                JSONFiles: '${{ s.jsonVariableSubstituion }}'
+
+            - ${{ each api in a.api }}:
+              - task: stephane-eyskens.apim.apim.apim@3
+                displayName: 'API Management - Create/Update API '
+                inputs:
+                  ConnectedServiceNameARM: '${{ a.azureSubscription }}'
+                  ResourceGroupName: '${{ api.resourceGroupName }}'
+                  ApiPortalName: '${{ api.apiPortalName }}'
+                  UseProductCreatedByPreviousTask: false
+                  # product1: |
+                  #   Starter
+                  #   Unlimited
+                  OpenAPISpec: v3
+                  swaggerlocation: '$(webAppDeployment.AppServiceApplicationUrl)/swagger/v1/swagger.json'
+                  targetapi: '${{ api.targetapi }}'
+                  DisplayName: '${{ api.displayName }}'
+                  pathapi: '${{ api.pathApi }}'
+                  TemplateSelector: Custom
+                  Custom: |
+                    <policies>
+                        <inbound>
+                            <base />
+                            <cors>
+                                <allowed-origins>
+                                    <origin>*</origin>
+                                </allowed-origins>
+                                <allowed-methods>
+                                    <method>GET</method>
+                                    <method>POST</method>
+                                    <method>HEAD</method>
+                                    <method>OPTIONS</method>
+                                    <method>PATCH</method>
+                                    <method>PUT</method>
+                                    <method>DELETE</method>
+                                    <method>TRACE</method>
+                                </allowed-methods>
+                                <allowed-headers>
+                                    <header>*</header>
+                                </allowed-headers>
+                            </cors>
+                            <set-backend-service base-url="$(webAppDeployment.AppServiceApplicationUrl)" />
+                        </inbound>
+                        <backend>
+                            <base />
+                        </backend>
+                        <outbound>
+                            <base />
+                        </outbound>
+                        <on-error>
+                            <base />
+                        </on-error>
+                    </policies>
+                  MicrosoftApiManagementAPIVersion: '2018-01-01'
