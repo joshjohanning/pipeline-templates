@@ -55,7 +55,7 @@ jobs:
       inputs:
         command: 'restore'
         projects: '${{ s.projectFile }}'
-        vstsFeed: '${{ parameters.nugetFeed }}'
+        # vstsFeed: '${{ parameters.nugetFeed }}'
 
     - ${{ if eq(s.runSonarQube, 'true') }}:
       - task: SonarSource.sonarqube.15B84CA1-B62F-4A2A-A403-89B77A063157.SonarQubePrepare@4
