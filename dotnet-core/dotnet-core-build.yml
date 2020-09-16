@@ -115,13 +115,14 @@ jobs:
       - task: SonarSource.sonarqube.291ed61f-1ee4-45d3-b1b0-bf822d9095ef.SonarQubePublish@4
         displayName: 'Publish Quality Gate Result'
 
-    - task: DotNetCoreCLI@2
-      displayName: 'dotnet publish'
-      inputs:
-        command: 'publish'
-        publishWebProjects: true
-        zipAfterPublish: true
-        arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory)'
+    - ${{ if eq(s.webProject, 'true') }}:
+      - task: DotNetCoreCLI@2
+        displayName: 'dotnet publish'
+        inputs:
+          command: 'publish'
+          publishWebProjects: true
+          zipAfterPublish: true
+          arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory)'
 
     - pwsh: |
         if (Test-Path "$(build.artifactstagingdirectory)/s.zip" -PathType leaf) {
