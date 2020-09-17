@@ -3,6 +3,9 @@ parameters:
   nugetFeed: '7ff0193d-c4dd-4087-8ab6-2a0e3bea3ac9'
   services: []
 
+variables:
+  disable.coverage.autogenerate: 'true'
+
 jobs:
 - ${{ each s in parameters.services }}:
 
