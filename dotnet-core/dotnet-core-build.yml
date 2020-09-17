@@ -8,8 +8,8 @@ jobs:
 
   - job:
     displayName: build ${{ s.name }}
-    # variables:
-    #   disable.coverage.autogenerate: 'true'
+    variables:
+      disable.coverage.autogenerate: 'true'
     pool:
       vmImage: '${{ s.vmImage }}'
 
@@ -112,6 +112,7 @@ jobs:
         inputs:
           codeCoverageTool: 'Cobertura'
           summaryFileLocation: '$(Build.ArtifactStagingDirectory)/CoverageResults/Cobertura.xml'
+          reportDirectory: '$(Build.ArtifactStagingDirectory)/CoverageResults'
 
     - ${{ if eq(s.runSonarQube, 'true') }}:
       - task: SonarSource.sonarqube.6D01813A-9589-4B15-8491-8164AEB38055.SonarQubeAnalyze@4
