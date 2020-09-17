@@ -111,7 +111,7 @@ jobs:
         displayName: 'Publish code coverage report'
         inputs:
           codeCoverageTool: 'Cobertura'
-          summaryFileLocation: '$(Build.SourcesDirectory)/CoverageResults/Cobertura.xml'
+          summaryFileLocation: '$(Build.ArtifactStagingDirectory)/CoverageResults/Cobertura.xml'
 
     - ${{ if eq(s.runSonarQube, 'true') }}:
       - task: SonarSource.sonarqube.6D01813A-9589-4B15-8491-8164AEB38055.SonarQubeAnalyze@4
