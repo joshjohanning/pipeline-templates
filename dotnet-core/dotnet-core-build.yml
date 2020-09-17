@@ -99,20 +99,29 @@ jobs:
           publishTestResults: true
           arguments: '--configuration ${{ parameters.buildConfiguration }} /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
 
+      # Run the report generator for just the app
+      - task: reportgenerator@4
+        inputs:
+          reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml;$(Pipeline.Workspace)/**/Cobertura.xml'
+          targetdir: '$(Build.ArtifactStagingDirectory)/CoverageResults'
+      #
+      
+      # Download all CoverageResults for all pipeline jobs
       - download: 'current'
         patterns: '**/CoverageResults/**'
 
       - task: reportgenerator@4
         inputs:
           reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml;$(Pipeline.Workspace)/**/Cobertura.xml'
-          targetdir: '$(Build.ArtifactStagingDirectory)/CoverageResults'
+          targetdir: '$(Pipeline.Workspace)/CoverageResults'
         
       - task: PublishCodeCoverageResults@1
         displayName: 'Publish code coverage report'
         inputs:
           codeCoverageTool: 'Cobertura'
-          summaryFileLocation: '$(Build.ArtifactStagingDirectory)/CoverageResults/Cobertura.xml'
-          reportDirectory: '$(Build.ArtifactStagingDirectory)/CoverageResults'
+          summaryFileLocation: '$(Pipeline.Workspace)/CoverageResults/Cobertura.xml'
+          reportDirectory: '$(Pipeline.Workspace)/CoverageResults'
+      #
 
     - ${{ if eq(s.runSonarQube, 'true') }}:
       - task: SonarSource.sonarqube.6D01813A-9589-4B15-8491-8164AEB38055.SonarQubeAnalyze@4
