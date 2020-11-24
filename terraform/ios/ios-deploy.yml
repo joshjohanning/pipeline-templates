@@ -1,0 +1,212 @@
+parameters:
+  appName: 'sample'
+  configuration: 'Dev'
+  environmentPrefix: 'ugGO-iPad'
+  variableGroupPrefix: 'iOS-sample'
+  bundlePrefix: 'com.universalweather'
+  teamId: 'KHGSQ4C2NT'
+  testFlightUpload: 'true'
+  shouldSkipSubmission: 'true' #set false to send notification to testers
+
+jobs:
+
+- deployment: deploy${{ parameters.configuration }}
+  displayName: deploy to ${{ parameters.configuration }}
+
+  environment: ${{ parameters.environmentPrefix }}-${{ parameters.configuration }}
+
+  variables:
+  - group: ${{ parameters.variableGroupPrefix }}-${{ parameters.configuration }}
+
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+
+        # Task - Extract IPA to replace tokens
+        - task: ExtractFiles@1
+          inputs:
+            archiveFilePatterns: '$(pipeline.workspace)/**/*.ipa'
+            destinationFolder: '$(pipeline.workspace)/temp'
+            cleanDestinationFolder: false
+
+        # Task - Delete the extracted IPA
+        - task: DeleteFiles@1
+          displayName: Delete existing IPA
+          inputs:
+            SourceFolder: '$(pipeline.workspace)'
+            Contents: '**/*.ipa'
+
+        # Task - Replace tokens
+        - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+          inputs:
+            rootDirectory: '$(pipeline.workspace)'
+            targetFiles: '**/tokenized_environments.json => $(pipeline.workspace)/temp/Payload/${{ parameters.appName }}.app/Environments.json'
+            encoding: 'auto'
+            writeBOM: true
+            actionOnMissing: 'warn'
+            keepToken: false
+            tokenPrefix: '#{'
+            tokenSuffix: '}#'
+            useLegacyPattern: false
+            enableTelemetry: true
+
+        # Task - Delete existing _CodeSignature directory
+        - script: |
+            set -euxo pipefail
+
+            # remove existing code signature
+            rm -R _CodeSignature/
+
+          displayName: Delete existing _CodeSignature
+          workingDirectory: $(pipeline.workspace)/temp/Payload/${{ parameters.appName }}.app
+
+        # Task - Update Info.plist and AppIcons based on configuration
+        - script: |
+            set -euxo pipefail
+
+            abbrev=${{ parameters.configuration }}
+
+            # set suffix abbreviation for stage
+            if [ ${{ parameters.configuration }} = "Stage" ]; then abbrev=Stg; fi
+            
+            # common actions for all but Release - Release already has the right values
+            if [ ! ${{ parameters.configuration }} = "Release" ]; then
+              # common plist actions
+              plutil -replace CFBundleDisplayName -string ${{ parameters.appName }}-${abbrev} Info.plist
+              plutil -replace CFBundleIdentifier -string ${{ parameters.bundlePrefix }}.${{ parameters.appName }}-${abbrev} Info.plist
+              plutil -replace CFBundleName -string ${{ parameters.appName }}-${abbrev} Info.plist
+              plutil -replace CFBundleDisplayName -string ${{ parameters.appName }}-${abbrev} Info.plist
+              plutil -replace Environment -string ${{ parameters.configuration }} Info.plist
+            fi
+
+            # dev and test plist actions
+            if [ ${{ parameters.configuration }} = "Test" ] || [ ${{ parameters.configuration }} = "Dev" ]; then
+                plutil -insert CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconFiles -xml "<array><string>AppIcon-${{ parameters.configuration }}60x60</string></array>" Info.plist
+                plutil -replace CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName -string AppIcon-${{ parameters.configuration }} Info.plist
+                plutil -replace CFBundleIcons~ipad.CFBundlePrimaryIcon.CFBundleIconFiles -json '[ "'"AppIcon-${{ parameters.configuration }}60x60"'", "'"AppIcon-${{ parameters.configuration }}76x76"'" ]' Info.plist
+                plutil -replace CFBundleIcons~ipad.CFBundlePrimaryIcon.CFBundleIconName -string AppIcon-${{ parameters.configuration }} Info.plist
+
+                # fix appicons for dev and test
+                rm -R AppIcon76x76@2x\~ipad.png
+                mv ../../../ios-build/Icon-${{ parameters.configuration }}-60@2x.png AppIcon-${{ parameters.configuration }}60x60@2x.png
+                mv ../../../ios-build/Icon-${{ parameters.configuration }}-76@2x.png AppIcon-${{ parameters.configuration }}76x76@2x~ipad.png
+
+                # delete the old and copy in the new Assets file (different icons)
+                rm -R Assets.car
+                mv ../../../ios-build/Assets-${{ parameters.configuration }}.car Assets.car
+            fi
+
+            # test plist actions
+            if [ ${{ parameters.configuration }} = "Test" ]; then
+              plutil -replace UIDeviceFamily -json '[ 2 ]' Info.plist
+            fi
+
+            # dev plist actions
+            if [ ${{ parameters.configuration }} = "Dev" ]; then
+                plutil -remove UILaunchImages Info.plist
+            fi
+
+            # all plist configurations except dev
+            if [ ! ${{ parameters.configuration }} = "Dev" ]; then
+              plutil -replace UIDeviceFamily -json '[ 2 ]' Info.plist
+            fi
+
+          displayName: Update Info.plist and AppIcons
+          workingDirectory: $(pipeline.workspace)/temp/Payload/${{ parameters.appName }}.app
+          
+        # Task - Generate Entitlements.plist
+        - script: |
+            set -euxo pipefail
+
+            abbrev=${{ parameters.configuration }}
+
+            # set suffix abbreviation for stage
+            if [ ${{ parameters.configuration }} = "Stage" ]; then abbrev=Stg; fi
+
+            # Generate entitlements.plist
+            codesign -d --entitlements :- "$(pipeline.workspace)/temp/Payload/${{ parameters.appName }}.app" > entitlements.plist
+
+            # This is not needed for any of the configurations
+            plutil -remove "com\.apple\.developer\.icloud-container-environment" entitlements.plist
+
+            # common actions for all but Release - Release already has the right values
+            if [ ! ${{ parameters.configuration }} = "Release" ]; then
+              # common plist actions
+              plutil -replace "application-identifier" -string ${{ parameters.teamId }}.${{ parameters.bundlePrefix }}.${{ parameters.appName }}-${abbrev} entitlements.plist
+              plutil -replace "com\.apple\.developer\.ubiquity-kvstore-identifier" -string ${{ parameters.teamId }}.${{ parameters.bundlePrefix }}.${{ parameters.appName }}-${abbrev} entitlements.plist
+            fi
+
+            # dev plist actions
+            # none
+
+          displayName: Generate Entitlements
+          workingDirectory: $(pipeline.workspace)/ios-build
+
+        # Task - Repack the IPA (replace existing ipa)
+        - task: ArchiveFiles@2
+          inputs:
+            rootFolderOrFile: '$(pipeline.workspace)/temp'
+            includeRootFolder: false
+            archiveType: 'zip'
+            archiveFile: '$(pipeline.workspace)/ios-build/${{ parameters.appName }}.ipa'
+            replaceExistingArchive: true # this doesn't work
+
+        # Task - Download p12 certificate
+        - task: DownloadSecureFile@1
+          name: p12cert
+          inputs:
+            secureFile: '${{ parameters.appName }}-build-cert.p12'
+
+        # Task - Download signing certificate
+        - task: DownloadSecureFile@1
+          name: mobileprovision
+          inputs:
+            secureFile: '${{ parameters.appName }}-${{ parameters.configuration }}.mobileprovision'
+
+        # Task - Resign the IPA with the corresponding certificate
+        - task: IpaResign@1
+          inputs:
+            ipaPath: '$(pipeline.workspace)/**/*.ipa'
+            entitlementsPath: '$(pipeline.workspace)/ios-build/entitlements.plist'
+            signFileP12Path: '$(p12cert.secureFilePath)'
+            signFileP12Password: '$(certpwd)'
+            provFileProfilePath: '$(mobileprovision.secureFilePath)'
+
+        # Task - Repack the IPA (replace existing ipa)
+        - task: ArchiveFiles@2
+          inputs:
+            rootFolderOrFile: '$(pipeline.workspace)/ios-build/${{ parameters.appName }}.ipa'
+            includeRootFolder: false
+            archiveType: 'zip'
+            archiveFile: '$(pipeline.workspace)/ios-build/${{ parameters.appName }}-signed.zip'
+            replaceExistingArchive: true # this doesn't work
+
+        # Upload the IPA to see how it looks
+        - publish: $(pipeline.workspace)/ios-build/${{ parameters.appName }}-signed.zip
+          artifact: ${{ parameters.configuration }}-signed
+
+        # Task - Output CFBundleShortVersionString into logs
+        - script: |
+            plutil -extract CFBundleShortVersionString xml1 -o - Info.plist
+          displayName: Output CFBundleShortVersionString
+          workingDirectory: $(pipeline.workspace)/temp/Payload/${{ parameters.appName }}.app
+
+        # Task - Output CFBundleVersion into logs
+        - script: |
+            plutil -extract CFBundleVersion xml1 -o - Info.plist
+          displayName: Output CFBundleVersion
+          workingDirectory: $(pipeline.workspace)/temp/Payload/${{ parameters.appName }}.app
+
+        # Task - Upload to testflight, Condition : for release environment, branch should be release
+        - task: AppStoreRelease@1
+          # condition: or(not(eq(variables.configuration, 'Release')), and(eq(variables['Build.SourceBranchName'], 'Release'), eq(variables.configuration, 'Release')))
+          condition: and(succeeded(), eq('${{ parameters.testFlightUpload }}', true))
+          displayName: 'TestFlight Upload'
+          inputs:
+            serviceEndpoint: '${{ parameters.appName }}-AppStoreConnection'
+            appType: 'iOS'
+            ipaPath: '$(pipeline.workspace)/**/*.ipa'
+            releaseTrack: 'TestFlight'
+            shouldSkipWaitingForProcessing: true
+            shouldSkipSubmission: '${{ parameters.shouldSkipSubmission }}' #set false to send notification to testers

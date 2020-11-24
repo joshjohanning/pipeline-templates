@@ -1,0 +1,126 @@
+parameters:
+  appName: 'sample'
+  projectName: 'sampleMobile'
+  configuration: 'Release' # we need to use a provisioning profile to build, but we will re-sign at deployment time
+  configurationUnitTest: 'Dev'
+  scheme: 'sample'
+  schemeUnitTest: sampleUnitTest
+  runTests: 'true'
+
+jobs:
+- job: build
+  displayName: build iOS app
+  steps:
+  - checkout: self  # self represents the repo where the initial Pipelines YAML file was found
+    clean: true  # whether to fetch clean each time
+    lfs: true
+    #  submodules: true does not work when submdoule are in private repo
+
+    # Get Submodules
+  - script: |
+      git -c http.$(submoduleUrl).extraheader="AUTHORIZATION: Basic $(submoduletoken)" submodule update --init --force --remote
+    displayName: Get Submodules
+
+  # Task - Update CFBundleShortVersionString
+  - task: VersionAssemblies@2
+    inputs:
+      filePattern: '**\${{ parameters.projectName }}-Info.plist'
+      versionSource: 'buildNumber'
+      versionFormat: 'threeParts'
+      replaceVersionFormat: 'custom'
+      customReplaceRegex: '<key>CFBundleShortVersionString</key>\s*<string>.*</string>'
+      replacePrefix: '<key>CFBundleShortVersionString</key><string>'
+      replacePostfix: '</string>'
+    displayName: 'Version Assemblies-CFBundleShortVersionString'
+
+  # Task - Update CFBundleVersion
+  - task: VersionAssemblies@2
+    inputs:
+      filePattern: '**\${{ parameters.projectName }}-Info.plist'
+      versionSource: 'buildNumber'
+      versionFormat: 'fourParts'
+      replaceVersionFormat: 'custom'
+      customReplaceRegex: '<key>CFBundleVersion</key>\s*<string>.*</string>'
+      replacePrefix: '<key>CFBundleVersion</key><string>'
+      replacePostfix: '</string>'
+    displayName: 'Version Assemblies-CFBundleVersion'
+
+  # Task - Install apple certificate
+  - task: InstallAppleCertificate@2
+    inputs:
+      certSecureFile: '${{ parameters.appName }}-build-cert.p12' 
+      certPwd: $(certpwd)
+
+  # Task - Install apple provisioning profile
+  - task: InstallAppleProvisioningProfile@1
+    inputs:
+      provProfileSecureFile: '${{ parameters.appName }}-${{ parameters.configuration }}.mobileprovision'
+
+  # CocoaPods
+  # Install CocoaPods dependencies for Swift and Objective-C Cocoa projects
+  - task: CocoaPods@0
+
+  # Task - Run UnitTests
+  - task: Xcode@5
+    displayName: 'Running UnitTestCases'
+    condition: and(succeeded(), eq('${{ parameters.runTests }}', true))
+    inputs:
+      actions: 'test'
+      scheme: '${{ parameters.schemeUnitTest }}'
+      sdk: 'iphonesimulator'
+      configuration: '${{ parameters.configurationUnitTest }}'
+      xcodeVersion: 'default' # Options: 8, 9, default, specifyPath
+      packageApp: false
+      xcWorkspacePath: '${{ parameters.projectName }}.xcworkspace'
+      destinationSimulators: 'iPad Pro (9.7-inch)'
+      destinationTypeOption: 'simulators'
+      destinationPlatformOption: 'iOS'
+      useXcpretty: true
+      publishJUnitResults: true
+
+
+  # Task - Build the app & run Unit Tests
+  - task: Xcode@5
+    displayName: 'Building App'
+    inputs:
+      actions: 'build'
+      signingOption: 'manual'
+      signingIdentity: '$(APPLE_CERTIFICATE_SIGNING_IDENTITY)'
+      provisioningProfileUuid: '$(APPLE_PROV_PROFILE_UUID)'
+      scheme: '${{ parameters.scheme }}'
+      sdk: 'iphoneos'
+      xcWorkspacePath: '${{ parameters.projectName }}.xcworkspace'
+      configuration: '${{ parameters.configuration }}'
+      packageApp: true
+      archivePath: '$(Build.ArtifactStagingDirectory)'
+      exportPath: '$(System.DefaultWorkingDirectory)'
+      xcodeVersion: 'default' # Options: 8, 9, 10, default, specifyPath
+
+  # Task - Compile Assets file for Dev and Test (different app icons)
+  - script: | 
+      set -euxo pipefail
+      mkdir build
+      xcrun actool --compile build *.xcassets --platform iphoneos --minimum-deployment-target 11.0 --app-icon AppIcon-Dev --output-partial-info-plist build/partial-dev.plist
+      mv build/Assets.car build/Assets-Dev.car
+      xcrun actool --compile build *.xcassets --platform iphoneos --minimum-deployment-target 11.0 --app-icon AppIcon-Test --output-partial-info-plist build/partial-test.plist
+      mv build/Assets.car build/Assets-Test.car
+    workingDirectory: ${{ parameters.projectName }}/Resources
+    displayName: Compile AppIcon Assets
+
+  # Task - Copy the IPA, entitlements, and Dev/Test images to the artifact staging directory
+  - task: CopyFiles@2
+    inputs:
+      Contents: |
+          **/*.ipa
+          **/tokenized_environments.json
+          **/AppIcon-Dev.appiconset/Icon-Dev-60@2x.png
+          **/AppIcon-Dev.appiconset/Icon-Dev-76@2x.png
+          **/AppIcon-Test.appiconset/Icon-Test-60@2x.png
+          **/AppIcon-Test.appiconset/Icon-Test-76@2x.png
+          **/Assets-*.car
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      flattenFolders: true
+
+  # Task - Publish .ipa, .xcarchive, assets.car, AppIcons, and tokenized_enivoronments.json
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: ios-build
