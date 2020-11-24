@@ -58,7 +58,7 @@ jobs:
       inputs:
         command: 'restore'
         projects: '${{ s.projectFile }}'
-        # vstsFeed: '${{ parameters.nugetFeed }}'
+        vstsFeed: '${{ parameters.nugetFeed }}'
 
     #Added extra properties to fix coverage not being detected from sonaqube
     - ${{ each sonar in s.sonarQube }}:
