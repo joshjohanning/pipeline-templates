@@ -1,6 +1,6 @@
 parameters:
   buildConfiguration: 'Release'
-  nugetFeed: '7ff0193d-c4dd-4087-8ab6-2a0e3bea3ac9'
+  nugetFeed: ''
   services: []
 
 jobs:
@@ -8,6 +8,9 @@ jobs:
 
   - job:
     displayName: build ${{ s.name }}
+    variables:
+      # Use the latest reportgenerator for code coverage
+      disable.coverage.autogenerate: 'true'
     pool:
       vmImage: '${{ s.vmImage }}'
 
@@ -57,14 +60,18 @@ jobs:
         projects: '${{ s.projectFile }}'
         vstsFeed: '${{ parameters.nugetFeed }}'
 
-    - ${{ if eq(s.runSonarQube, 'true') }}:
-      - task: SonarSource.sonarqube.15B84CA1-B62F-4A2A-A403-89B77A063157.SonarQubePrepare@4
+    #Added extra properties to fix coverage not being detected from sonaqube
+    - ${{ each sonar in s.sonarQube }}:
+      - task: SonarQubePrepare@4
         displayName: 'Prepare analysis on SonarQube'
+        condition: and(succeeded(), eq('${{ sonar.runSonarQube }}', 'true'))
         inputs:
           SonarQube: SonarQube
-          projectKey: ${{ s.sonarProjectKey }}
-          projectName: ${{ s.sonarProjectName }}
-
+          scannerMode: 'MSBuild'
+          projectKey: ${{ sonar.sonarProjectKey }}
+          projectName: ${{ sonar.sonarProjectName }}
+          extraProperties: |
+            sonar.coverageReportPaths=$(Agent.TempDirectory)/SonarQube.xml
 
     - task: DotNetCoreCLI@2
       displayName: 'dotnet build'
@@ -89,41 +96,89 @@ jobs:
       # Run tests - ensure `coverlet.msbuild` nuget package is added on each test project for code coverage
       # This should run on windows+ubuntu
       # If only cared about windows and were okay with downloading a .coverage file instead of inline results, remove the /p: arguments and just used '--collect "Code coverage"'
+      # Sept 22 20: updated code coverage to be less flaky - old: /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura' . See: https://github.com/coverlet-coverage/coverlet/blob/master/Documentation/KnownIssues.md#1-vstest-stops-process-execution-earlydotnet-test
       - task: DotNetCoreCLI@2
         displayName: 'dotnet test'
         inputs:
           command: test
           projects: '**/*[Tt]ests/*.csproj'
           publishTestResults: true
-          arguments: '--configuration ${{ parameters.buildConfiguration }} /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
+          arguments: '--collect:"XPlat Code Coverage"'
+
+      # Run the report generator for just the app
+      - task: reportgenerator@4
+        inputs:
+          reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml;$(Pipeline.Workspace)/**/Cobertura.xml;$(Agent.WorkFolder)/**/coverage.cobertura.xml'
+          targetdir: '$(Build.ArtifactStagingDirectory)/CoverageResults'
+      #
+      
+      # Download all CoverageResults for all pipeline jobs
+      - download: 'current'
+        patterns: '**/CoverageResults/**'
 
       - task: reportgenerator@4
         inputs:
-          reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
-          targetdir: '$(Build.SourcesDirectory)/CoverageResults'
+          reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml;$(Pipeline.Workspace)/**/Cobertura.xml;$(Agent.WorkFolder)/**/coverage.cobertura.xml'
+          targetdir: '$(Pipeline.Workspace)/CoverageResults'
         
       - task: PublishCodeCoverageResults@1
         displayName: 'Publish code coverage report'
         inputs:
           codeCoverageTool: 'Cobertura'
-          summaryFileLocation: '$(Build.SourcesDirectory)/CoverageResults/Cobertura.xml'
+          summaryFileLocation: '$(Pipeline.Workspace)/CoverageResults/Cobertura.xml'
+          reportDirectory: '$(Pipeline.Workspace)/CoverageResults'
+      
+      - task: reportgenerator@4
+        displayName: 'Converting coverage file to sonarqube format'
+        inputs:
+          reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml;$(Pipeline.Workspace)/**/Cobertura.xml;$(Agent.WorkFolder)/**/coverage.cobertura.xml'
+          targetdir: '$(Agent.TempDirectory)'
+          reporttypes: 'SonarQube'
 
-    - ${{ if eq(s.runSonarQube, 'true') }}:
-      - task: SonarSource.sonarqube.6D01813A-9589-4B15-8491-8164AEB38055.SonarQubeAnalyze@4
+
+    - ${{ each sonar in s.sonarQube }}:
+      - task: SonarQubeAnalyze@4
         displayName: 'Run Code Analysis'
+        condition: and(succeeded(), eq('${{ sonar.runSonarQube }}', 'true'))
 
-      - task: SonarSource.sonarqube.291ed61f-1ee4-45d3-b1b0-bf822d9095ef.SonarQubePublish@4
+      - task: SonarQubePublish@4
         displayName: 'Publish Quality Gate Result'
+        condition: and(succeeded(), eq('${{ sonar.runSonarQube }}', 'true'))
+        inputs:
+          pollingTimeoutSec: '300'
+    
+    # Only publish web projects by default
+    # - ${{ if ne(s.publishWebProjects, 'false') }}:
+    #   - task: DotNetCoreCLI@2
+    #     displayName: 'dotnet publish'
+    #     inputs:
+    #       command: 'publish'
+    #       publishWebProjects: true
+    #       zipAfterPublish: true
+    #       arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory)'
+
+    # # Allow us to specify if we need to publish non web projects (ie: functions)
+    # - ${{ if eq(s.publishWebProjects, 'false') }}:
+    #   - task: DotNetCoreCLI@2
+    #     displayName: 'dotnet publish'
+    #     inputs:
+    #       command: 'publish'
+    #       publishWebProjects: ${{ s.publishWebProjects }}
+    #       projects: '${{ s.projectFile }}'
+    #       zipAfterPublish: true
+    #       arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory)'
 
     - task: DotNetCoreCLI@2
       displayName: 'dotnet publish'
       inputs:
         command: 'publish'
-        publishWebProjects: true
+        publishWebProjects: false
+        projects: '${{ s.projectFile }}'
         zipAfterPublish: true
         arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory)'
 
-    - pwsh: |
+    # Rename build artifact, if necessary
+    - powershell: |
         if (Test-Path "$(build.artifactstagingdirectory)/s.zip" -PathType leaf) {
           write-host "renaming build artifact"
           rename-item "$(build.artifactstagingdirectory)/s.zip" $(build.artifactstagingdirectory)/${{ s.name }}.zip

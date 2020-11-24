@@ -11,7 +11,7 @@ jobs:
     pool:
       vmImage: '${{ s.vmImage }}'
 
-    environment: ${{ s.environment }}
+    environment: '${{ s.environment }}'
 
     strategy:
       runOnce:
@@ -36,6 +36,14 @@ jobs:
               escapeType: none
               verbosity: detailed
 
+          # - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+          #   displayName: 'Replace tokens in .env'
+          #   inputs:
+          #     rootDirectory: '$(pipeline.workspace)'
+          #     targetFiles: '**/Client/build/static/js/**.js'
+          #     escapeType: none
+          #     verbosity: detailed
+
           # Run any IIS deployment(s)
           - ${{ each i in s.iis }}:
             - task: IISWebAppDeploymentOnMachineGroup@0
@@ -49,27 +57,45 @@ jobs:
                 TakeAppOfflineFlag: true
 
           # Run any Azure deployment(s)
-          - ${{ each a in s.azure }}:
-            - task: AzureRmWebAppDeployment@4
-              displayName: 'Deploy Azure App Service'
-              name: webAppDeployment
-              condition: and(succeeded(), eq('${{ s.runDeploy }}', true))
-              inputs:
-                azureSubscription: '${{ a.azureSubscription }}'
-                appType: 'webApp'
-                WebAppName: '${{ a.websiteName }}'
-                deployToSlotOrASE: true
-                ResourceGroupName: '${{ a.resourceGroupName }}'
-                SlotName: '${{ a.slotName }}'
-                packageForLinux: '$(Pipeline.Workspace)/${{ s.name }}/deploy'
-                AppSettings: '${{ s.appSettingsEdits }}'
-                JSONFiles: '${{ s.jsonVariableSubstituion }}'
+          - ${{ each az in s.azure }}:
 
-            - ${{ each api in a.api }}:
+            # Run any Azure Web App deployments
+            - ${{ each azweb in az.webApp }}:
+              - task: AzureRmWebAppDeployment@4
+                displayName: 'Deploy Azure App Service'
+                name: webAppDeployment
+                condition: and(succeeded(), eq('${{ s.runDeploy }}', true))
+                inputs:
+                  azureSubscription: '${{ az.azureSubscription }}'
+                  appType: 'webApp' # could make this a parameter if 'webAppLinux' was ever needed to be used
+                  WebAppName: '${{ azweb.websiteName }}'
+                  deployToSlotOrASE: true
+                  ResourceGroupName: '${{ azweb.resourceGroupName }}'
+                  SlotName: '${{ azweb.slotName }}'
+                  packageForLinux: '$(Pipeline.Workspace)/${{ s.name }}/deploy'
+                  AppSettings: '${{ s.appSettingsEdits }}'
+                  JSONFiles: '${{ s.jsonVariableSubstituion }}'
+
+            # Run any Azure Function App deployments
+            - ${{ each func in az.functionApp }}:
+              - task: AzureFunctionApp@1
+                inputs:
+                  azureSubscription: '${{ az.azureSubscription }}'
+                  appType: 'functionApp' # could make this a parameter if 'functionAppLinux' was ever needed to be used
+                  appName: '${{ func.appName }}'
+                  package: '$(Pipeline.Workspace)/${{ s.name }}/deploy'
+                  deploymentMethod: 'auto'
+
+            # Run any Azure APIM deployments
+            - ${{ each api in az.apim }}:
+              # sleep for 15 seconds to make sure the website is up and refreshed
+              - pwsh: Start-Sleep -s 20
+                displayName: Start-Sleep -s 20
+
               - task: stephane-eyskens.apim.apim.apim@3
                 displayName: 'API Management - Create/Update API '
                 inputs:
-                  ConnectedServiceNameARM: '${{ a.azureSubscription }}'
+                  ConnectedServiceNameARM: '${{ api.apimAzureSubscription }}'
                   ResourceGroupName: '${{ api.resourceGroupName }}'
                   ApiPortalName: '${{ api.apiPortalName }}'
                   UseProductCreatedByPreviousTask: false
