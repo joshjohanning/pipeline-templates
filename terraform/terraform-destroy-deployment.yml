@@ -1,4 +1,5 @@
 parameters:
+  varFile: ''
   environment: ''
   backendArg: ''
   azureSubscription: ''
@@ -21,6 +22,6 @@ jobs:
             azureSubscription: ${{ parameters.azureSubscription }}
         - script: |
             terraform init -no-color -input=false ${{ parameters.backendArg }}
-            terraform destroy -no-color -input=false -auto-approve
+            terraform destroy -no-color -input=false -auto-approve -var-file=${{ parameters.varFile }}
           displayName: Terraform Destroy
           workingDirectory: ${{ parameters.rootFolder }}
