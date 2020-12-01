@@ -76,6 +76,15 @@ jobs:
                   AppSettings: '${{ s.appSettingsEdits }}'
                   JSONFiles: '${{ s.jsonVariableSubstituion }}'
 
+              - task: AzureAppServiceManage@0
+                inputs:
+                  azureSubscription: '${{ az.azureSubscription }}'
+                  Action: 'Swap Slots'
+                  WebAppName: '${{ azweb.websiteName }}'
+                  ResourceGroupName: '${{ azweb.resourceGroupName }}'
+                  SourceSlot: '${{ azweb.slotName }}'
+                  swapWithProduction: true
+
             # Run any Azure Function App deployments
             - ${{ each func in az.functionApp }}:
               - task: AzureFunctionApp@1
