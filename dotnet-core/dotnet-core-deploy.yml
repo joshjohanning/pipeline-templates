@@ -85,15 +85,17 @@ jobs:
                   SourceSlot: '${{ azweb.slotName }}'
                   swapWithProduction: true
 
-              - task: AzurePowerShell@5
-                displayName: 'Output Azure WebApp Url'
+              - task: AzureCLI@2
+                displayName: 'Output Web App URL'
                 inputs:
                   azureSubscription: '${{ az.azureSubscription }}'
-                  ScriptType: 'InlineScript'
-                  Inline: |
+                  scriptType: 'pscore'
+                  scriptLocation: 'inlineScript'
+                  inlineScript: |
                     $webApp = az webapp show --name ${{ azweb.websiteName }} --resource-group ${{ azweb.resourceGroupName }} | ConvertFrom-Json
                     write-host $webApp.defaultHostName -ForegroundColor "green"
-                  azurePowerShellVersion: 'LatestVersion'
+                    
+                    # az webapp show --name app-tailspin-DEV --resource-group rg-tailspin-terraform-DEV --query defaultHostName
 
             # Run any Azure Function App deployments
             - ${{ each func in az.functionApp }}:
