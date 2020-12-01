@@ -45,13 +45,13 @@ jobs:
         displayName: 'npm run lint'
         workingDirectory: '${{ p.name }}'
 
-    - task: VersionAssemblies@2
-      inputs:
-        sourcePath: '$(Build.SourcesDirectory)'
-        filePattern: '**/AssemblyInfo.*'
-        versionSource: 'buildNumber'
-        versionFormat: 'fourParts'
-        replaceVersionFormat: 'fourParts'
+    # - task: VersionAssemblies@2
+    #   inputs:
+    #     sourcePath: '$(Build.SourcesDirectory)'
+    #     filePattern: '**/AssemblyInfo.*'
+    #     versionSource: 'buildNumber'
+    #     versionFormat: 'fourParts'
+    #     replaceVersionFormat: 'fourParts'
 
     - task: DotNetCoreCLI@2
       displayName: 'dotnet restore'
@@ -78,7 +78,7 @@ jobs:
       inputs:
         command: 'build'
         projects: '${{ s.projectFile }}'
-        arguments: '--configuration ${{ parameters.buildConfiguration }}'
+        arguments: '--configuration ${{ parameters.buildConfiguration }} /p:Version=$(build.buildnumber)'
 
     - ${{ if eq(s.runYarnTests, 'true') }}:
       - ${{ each p in s.NpmPackages }}:
@@ -175,7 +175,7 @@ jobs:
         publishWebProjects: false
         projects: '${{ s.projectFile }}'
         zipAfterPublish: true
-        arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory)'
+        arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory) /p:Version=$(build.buildnumber)'
 
     # Rename build artifact, if necessary
     - powershell: |
