@@ -86,7 +86,7 @@ jobs:
                   swapWithProduction: true
 
               - task: AzureCLI@2
-                displayName: 'Output Web App URL'
+                displayName: 'Output WebApp URL'
                 inputs:
                   azureSubscription: '${{ az.azureSubscription }}'
                   scriptType: 'pscore'
