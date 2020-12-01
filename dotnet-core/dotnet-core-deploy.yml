@@ -85,6 +85,16 @@ jobs:
                   SourceSlot: '${{ azweb.slotName }}'
                   swapWithProduction: true
 
+              - task: AzurePowerShell@5
+                displayName: 'Output Azure WebApp Url'
+                inputs:
+                  azureSubscription: '${{ az.azureSubscription }}'
+                  ScriptType: 'InlineScript'
+                  Inline: |
+                    $webApp = az webapp show --name ${{ azweb.websiteName }} --resource-group ${{ azweb.resourceGroupName }} | ConvertFrom-Json
+                    write-host $webApp.defaultHostName -ForegroundColor "green"
+                  azurePowerShellVersion: 'LatestVersion'
+
             # Run any Azure Function App deployments
             - ${{ each func in az.functionApp }}:
               - task: AzureFunctionApp@1
