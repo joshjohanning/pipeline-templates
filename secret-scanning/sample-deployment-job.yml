@@ -1,0 +1,16 @@
+parameters:
+  environment: ''
+  pool: 
+    vmImage: 'ubuntu-latest'
+jobs:
+- deployment: deploy
+  displayName: deploy
+  pool: ${{ parameters.pool }}
+  environment: ${{ parameters.environment }}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - script: |
+            echo "deploy hello world"
+          displayName: deploy
