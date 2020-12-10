@@ -1,0 +1,6 @@
+parameters:
+  whatToBuild: ''
+
+steps:
+- script: |
+    echo "${{ parameters.whatToBuild }}, here is where I do my build!"
