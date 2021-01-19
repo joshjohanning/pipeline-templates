@@ -16,18 +16,13 @@ jobs:
       deploy:
         steps:
         - checkout: self
-        - task: DownloadBuildArtifacts@0
-          displayName: Download Plan
-          inputs:
-            buildType: current
-            downloadType: single
-            artifactName: ${{ parameters.artifactName }}
-            downloadPath: '$(System.ArtifactsDirectory)'
+        - download: current
+          artifact: ${{ parameters.artifactName }}
         - template: get-tf-credentials.steps.yml
           parameters:
             azureSubscription: ${{ parameters.azureSubscription }}
         - script: |
-            terraform init -no-color -input=false ${{ parameters.backendArg }}
-            terraform apply -no-color -input=false -auto-approve $(System.ArtifactsDirectory)/${{ parameters.artifactName }}/out.plan
+            terraform init -input=false ${{ parameters.backendArg }}
+            terraform apply -input=false -auto-approve $(Pipeline.Workspace)/${{ parameters.artifactName }}/out.plan
           displayName: Terraform Apply
           workingDirectory: ${{ parameters.rootFolder }}

@@ -16,13 +16,9 @@ jobs:
     parameters:
       azureSubscription: ${{ parameters.azureSubscription }}
   - script: |
-      terraform init -no-color -input=false ${{ parameters.backendArg }}
-      terraform plan -no-color -input=false -var-file=${{ parameters.varFile }} ${{ parameters.additionalVars }} -out="$(Build.ArtifactStagingDirectory)/out.plan"
+      terraform init -input=false ${{ parameters.backendArg }}
+      terraform plan -input=false -var-file=${{ parameters.varFile }} ${{ parameters.additionalVars }} -out="$(Build.ArtifactStagingDirectory)/out.plan"
     workingDirectory: ${{ parameters.rootFolder }}
     displayName: Terraform Plan
-  - task: PublishBuildArtifacts@1
-    displayName: Publish Plan as an Artifact
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: ${{ parameters.artifactName }}
-      publishLocation: Container
+  - publish: $(Build.ArtifactStagingDirectory)/out.plan
+    artifact: ${{ parameters.artifactName }}
