@@ -33,11 +33,7 @@ jobs:
   - group: ${{ parameters.varGroup }}
   #These variables are used to replace the tokens in '**/values.release.yaml'
   #When deploying multiple services, may have to put this inside the loop to replace tokens more correctly.
-  # - name: imageRepository
-  #   value: ${{ parameters.containerRegistry}}/${{ parameters.imageRepository }}
-  # - name: tag
-  #   value: ${{ parameters.tag }}
-  
+
   strategy:
     runOnce:
       deploy:
