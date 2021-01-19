@@ -1,0 +1,63 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+name: $(Date:yyyyMMdd)$(Rev:.r)-$(Build.SourceBranchName)
+
+trigger:
+- job-templates
+
+resources:
+  repositories:
+  - repository: MyFirstWebsite
+    name: MyFirstWebsite
+    type: git
+  - repository: templates
+    name: pipeline-templates
+    type: git
+  containers:
+  - container: azdocontainerjobagent
+    image: myacr.azurecr.io/soccerjoshjazdocontainerjobagent:latest
+    endpoint: azdocontainerjobagent
+
+variables:
+  buildConfiguration: 'Release'
+  buildPlatform: 'any-cpu'
+  buildSolution: 'SampleConsoleApp'
+  runBuild: true
+  runTest: true
+  #deployment vars
+  azureSubscription: 'my-azure-sub'
+  storageAccount: 'storewmqobe5cyfwem'
+  storageAccountContainerName: 'samplesconsoleapp'
+  #container vars
+  buildContainerId: 'azdocontainerjobagent'
+  buildContainerImage: 'myacr.azurecr.io/soccerjoshjazdocontainerjobagent'
+  buildContainerTag: '406'
+  buildContainerEndpoint: 'azdocontainerjobagent'
+
+stages:
+- stage: build
+  displayName: Build console app
+  jobs:
+  - template: console-build.yml@templates
+    parameters:
+      buildConfiguration: $(buildConfiguration)
+      runBuild: $(runBuild)
+      #container vars
+      buildContainerId: ${{ variables.buildContainerId }}
+      
+  - template: dotnet-test.yml@templates
+    parameters:
+      buildConfiguration: $(buildConfiguration)
+      runTest: $(runTest)
+
+- stage: deploy
+  displayName: Deploy app
+  jobs:
+  - template: console-deploy.yml@templates
+    parameters: 
+      azureSubscription: $(azureSubscription)
+      storageAccount: $(storageAccount)
+      storageAccountContainerName: $(storageAccountContainerName)

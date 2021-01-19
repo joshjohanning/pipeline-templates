@@ -1,0 +1,37 @@
+trigger:
+  - main
+  
+resources:
+  repositories:
+  - repository: templates
+    type: github
+    name: soccerjoshj07/pipeline-templates
+    endpoint: soccerjoshj07
+
+extends:
+  template: secret-scanning/secret-scanning-extends.yml@templates
+  parameters:
+    buildStageName: build
+    # use steps template or job template for for build
+    buildJobs:
+    - template: secret-scanning/sample-build-job.yml@templates
+      parameters:
+        whatToBuild: 'Hello world'
+    buildSteps:
+    - template: secret-scanning/sample-build-steps.yml@templates
+      parameters:
+        whatToBuild: 'Hello world'
+    deployStages:
+    - stage: dev
+      displayName: deploy to dev
+      jobs: 
+      # use deployment job template for deployment
+      - template: secret-scanning/sample-deployment-job.yml@templates
+        parameters:
+          environment: github-secret-scanning-test-gate-dev
+    - stage: prod
+      displayName: deploy to prod
+      jobs:
+      - template: ../secret-scanning/sample-deployment-job.yml@templates
+        parameters:
+          environment: github-secret-scanning-test-gate-prod

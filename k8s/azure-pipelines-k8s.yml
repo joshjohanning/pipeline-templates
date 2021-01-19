@@ -1,0 +1,72 @@
+# Deploy to Azure Kubernetes Service
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+  branches: 
+    include: 
+      - master
+
+name: 1.0$(rev:.r)
+
+resources:
+  repositories:
+  - repository: templates
+    name: pipeline-templates
+    type: git
+
+variables:
+  # Azure Container Registry variables
+  dockerRegistryServiceConnection: 'ACR-myacr'
+  imageRegistry: 'myacr.azurecr.io'
+  imageRepository: 'my-k8s-app'
+  tag: '$(Build.BuildNumber)'
+  imagePullSecret: 'myk8sapp-auth'
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:  
+  - template: k8s/k8s-build.yml@templates
+    parameters:
+      dockerRegistryServiceConnection: $(dockerRegistryServiceConnection)
+      tag: $(tag)
+      services:
+        - serviceName: $(imageRepository)
+          imageRepository: $(imageRepository)
+          projectPath: '$(Build.SourcesDirectory)' # the folder with the docker file
+          skip: false
+
+- stage: DeployDev
+  displayName: Deploy to Dev
+  dependsOn: Build
+  variables:
+    # Stage Variables to be used as environment tokens to be replaced
+    # Environment in Azure DevOps, EnvName.namespace
+    environment: k8s-pipeline.dev
+    namespace: dev
+    kubernetesServiceConnection: k8s-pipeline-dev
+    varGroup: my-var-group-kv-dev
+    helmVersion: '2.16.1'
+
+  jobs:
+  - template: k8s/k8s-deploy-helm.yml@templates
+    parameters:
+      # Azure Container Registry variables
+      dockerRegistryServiceConnection: $(dockerRegistryServiceConnection)
+      #imageRegistry: $(imageRegistry)
+      tag: $(tag)
+      # Deployment variables
+      imagePullSecret: $(imagePullSecret)
+      environment: ${{ variables.environment }}
+      namespace: $(namespace)
+      kubernetesServiceConnection: ${{ variables.kubernetesServiceConnection }}
+      helmVersion: $(helmVersion)
+      # Environment-specific variables
+      varGroup: ${{ variables.varGroup }}
+      services:
+        - serviceName: $(imageRepository)
+          overrides: imagePullSecrets[0].name=$(imagePullSecret)
+          skip: false

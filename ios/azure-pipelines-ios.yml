@@ -1,0 +1,68 @@
+# Xcode
+# Build, test, and archive an Xcode workspace on macOS.
+# Add steps that install certificates, test, sign, and distribute an app, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/xcode
+
+#https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/azure-repos-git?view=azure-devops&tabs=yaml
+
+name: '1.0$(Rev:.r).$(Date:yyyyMMdd)'
+
+trigger:
+  branches:
+    include:
+    - Dev
+
+pool:
+  vmImage: 'macos-latest'
+
+resources:
+  repositories:
+  - repository: templates
+    name: tool.PipelineTemplates
+    type: git
+    ref: master
+
+variables:
+  # global
+  appName: 'myIosApp' # name of app
+  # build
+  projectName: 'myapp' # name of project file/folder; used for Info.plist file, .xcworkspace file, and .xcassets generation
+  configurationBuild: 'Release' # we need to use a provisioning profile to build, but we will re-sign at deployment time
+  configurationUnitTest: 'Dev' # testability is disabled for release
+  scheme: 'app' # the scheme to build
+  schemeUnitTest: 'appTest' # the scheme to test
+  runTests: 'true' # flag to disable/enable unit tests
+  # release
+  environmentPrefix: 'myApp-iPad' # used for the Azure Pipelines Environment for approvals; "-configuration" is appended
+  variableGroupPrefix: 'iOS-myApp' # prefix used for variable group; "-configuration" is appended
+  testFlightUpload: 'true' # set to false to skip testflight upload step
+  shouldSkipSubmission: 'true' # set false to send notification to testers in testflight upload
+
+stages:
+- stage: build
+  jobs: 
+  - template: ios/ios-build.yml@templates
+    parameters: 
+      appName: '${{ variables.appName }}'
+      projectName: '${{ variables.projectName }}'
+      configuration: '${{ variables.configurationBuild }}'
+      configurationUnitTest: '${{ variables.configurationUnitTest }}'
+      scheme: '${{ variables.scheme }}'
+      schemeUnitTest: '${{ variables.schemeUnitTest }}'
+      runTests: '${{ variables.runTests }}'
+
+- stage: deployDev
+  displayName: Deploy Dev IPA
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  variables: 
+  - name: configuration
+    value: Dev
+  jobs: 
+  - template: ios/ios-deploy.yml@templates
+    parameters:
+      appName: '${{ variables.appName }}'
+      configuration: '${{ variables.configuration }}' # the app build configuration/environment
+      environmentPrefix: '${{ variables.environmentPrefix }}'
+      variableGroupPrefix: '${{ variables.variableGroupPrefix }}'
+      testFlightUpload: '${{ variables.testFlightUpload }}'
+      shouldSkipSubmission: '${{ variables.shouldSkipSubmission }}'

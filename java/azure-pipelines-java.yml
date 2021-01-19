@@ -1,0 +1,28 @@
+# Gradle
+# Build your Java project and run tests with Gradle using a Gradle wrapper script.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+name: 1.0$(rev:.r)
+
+resources:
+  repositories:
+  - repository: templates
+    name: pipeline-templates
+    type: git
+
+trigger:
+- master
+
+stages: 
+- stage: build
+  displayName: Build
+  jobs:
+  - template: java/gradle-build.yml@templates
+    parameters:
+      # See comments in pipeline-templates repo for parameter descriptions
+      gradleTasks: 'clean test jacocoRootReport publish'
+      gradleAdditionalBuildOptions: ''
+      gradleOpts: ''
+      jdkVersion: 1.8
+      jdkArchitecture: x64

@@ -1,0 +1,99 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+name: 1.0.0$(rev:.r)
+
+trigger:
+- feature/*
+
+# pool:
+#   vmImage: 'ubuntu-latest'
+
+resources:
+  repositories:
+  - repository: templates
+    name: pipeline-templates
+    type: git
+
+
+variables:
+  buildConfiguration: 'Release'
+  nugetFeed: 'nuget-feed-dev'
+  azureSubscription: 'my-azure-subscription'
+
+stages:
+- stage: build
+  jobs: 
+  - template: dotnet-core/dotnet-core-build.yml@templates
+    parameters:
+      buildConfiguration: '${{ variables.buildConfiguration }}'
+      nugetFeed: '${{ variables.nugetFeed }}'
+      services:
+      - name: 'my.Web.app'
+        projectFile: '**/*.Web.csproj'
+        repo: 'self'
+        npmPackages:
+        - name: Client
+        runYarnTests: 'false'
+        vmImage: 'ubuntu-latest'
+
+- stage: deployDev
+  displayName: Deploy to Dev
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  variables: 
+  - group: DEV
+  - group: ALL-ENV
+  - name: environment
+    value: 'dev'
+  jobs: 
+  - template: dotnet-core/dotnet-core-deploy.yml@templates
+    parameters:
+      services:
+      - name: 'my.Web.app'
+        runDeploy: true
+        environment:
+          name: 'myWebApp-${{ variables.environment }}'
+          resourceType: 'VirtualMachine' # IIS
+          tags: 'web' # IIS
+        replaceTokensTargetFiles: |
+          **/appsettings.tokenization.json => appsettings.json
+          **/Client/build/static/js/**.js
+        iis:
+        - websiteName: 'devtesting'
+      - name: 'my.API.app'
+        runDeploy: true
+        environment:
+          name: 'myWebApp-${{ variables.environment }}'
+          resourceType: 'VirtualMachine' # IIS
+          tags: 'api' # IIS
+        replaceTokensTargetFiles: |
+          **\appsettings.tokenize.json => appsettings.json
+          **\uvgoConnectionStrings.tokenize.json => uvgoConnectionStrings.json
+        iis:
+        - websiteName: 'myapi.mycompany.com'
+          virtualApplication: 'myApi'
+      - name: 'my.API.app.APIM'
+        runDeploy: true
+        environment:
+          name: 'myWebApp-${{ variables.environment }}'
+        vmImage: 'windows-latest' # Azure
+        replaceTokensTargetFiles: |
+          **/appsettings.tokenize.json => appsettings.json
+          **/connectionstrings.tokenize.json => connectionstrings.json
+        appSettingsEdits: '-ASPNETCORE_ENVIRONMENT Development'
+        jsonVariableSubstituion: 'appsettings.json'
+        azure:
+        - azureSubscription: '${{ variables.azureSubscription }}'
+          webApp:
+          - websiteName: 'my-api-app-apim'
+            resourceGroupName: 'rg-api-apim'
+            slotName: '${{ variables.environment }}'
+          apim:
+          - displayName: 'API APIM'
+            pathApi: 'apim'
+            targetApi: 'apim-api'
+            apiPortalName: 'apim-rdn-${{ variables.environment }}'
+            resourceGroupName: 'rg-api-apim'
+            apimAzureSubscription: '${{ variables.azureSubscription }}'

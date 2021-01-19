@@ -1,0 +1,89 @@
+# From: https://github.com/soccerjoshj07/azdo-terraform-tailspin
+
+trigger:
+  - master
+
+resources:
+  repositories:
+  - repository: templates
+    type: github
+    name: soccerjoshj07/pipeline-templates
+    endpoint: soccerjoshj07
+
+variables:
+  devSubscription: demo-mslearn-tailspin-azure
+  rootFolder: app
+
+stages:
+  - stage: plandev
+    displayName: Plan DEV
+    jobs:
+    - template: terraform/terraform-plan-job.yml@templates
+      parameters:
+        varFile: 'terraform.DEV.tfvars'
+        # additionalVars: '-var "agent_token=$(AgentPoolToken)" -var "psql_password=$(PSQLPassword-DEV)"'
+        backendArg: '-backend-config=backend.DEV.tfvars'
+        azureSubscription: ${{ variables.devSubscription }}
+        rootFolder: $(rootFolder)
+        artifactName: plan-dev
+  - stage: applydev
+    displayName: Apply DEV
+    jobs:
+    - template: terraform/terraform-apply-deployment.yml@templates
+      parameters:
+        environment: DEV
+        backendArg: '-backend-config=backend.DEV.tfvars'
+        azureSubscription: ${{ variables.devSubscription }}
+        rootFolder: $(rootFolder)
+        artifactName: plan-dev
+      
+  - stage: planprod
+    displayName: Plan PROD
+    jobs:
+    - template: terraform/terraform-plan-job.yml@templates
+      parameters:
+        varFile: 'terraform.PROD.tfvars'
+        # additionalVars: '-var "agent_token=$(AgentPoolToken)" -var "psql_password=$(PSQLPassword-DEV)"'
+        backendArg: '-backend-config=backend.PROD.tfvars'
+        azureSubscription: ${{ variables.devSubscription }}
+        rootFolder: $(rootFolder)
+        artifactName: plan-prod
+  - stage: applyprod
+    displayName: Apply PROD
+    jobs:
+    - template: terraform/terraform-apply-deployment.yml@templates
+      parameters:
+        environment: PROD
+        backendArg: '-backend-config=backend.PROD.tfvars'
+        azureSubscription: ${{ variables.devSubscription }}
+        rootFolder: $(rootFolder)
+        artifactName: plan-prod
+      
+  - stage: destroyDev
+    dependsOn:
+    - applyDev
+    displayName: Destroy Dev
+    jobs:
+    - template: terraform/terraform-destroy-deployment.yml@templates
+      parameters:
+        varFile: 'terraform.DEV.tfvars'
+        environment: Dev-Destroy
+        backendArg: '-backend-config=backend.DEV.tfvars'
+        azureSubscription: ${{ variables.devSubscription }}
+        rootFolder: $(rootFolder)
+        artifactName: plan-dev
+
+  - stage: destroyProd
+    dependsOn:
+    - applyProd
+    - destroyDev
+    displayName: Destroy Prod
+    jobs:
+    - template: terraform/terraform-destroy-deployment.yml@templates
+      parameters:
+        varFile: 'terraform.PROD.tfvars'
+        environment: Prod-Destroy
+        backendArg: '-backend-config=backend.PROD.tfvars'
+        azureSubscription: ${{ variables.devSubscription }}
+        rootFolder: $(rootFolder)
+        artifactName: plan-prod
