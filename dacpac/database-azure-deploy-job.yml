@@ -31,8 +31,9 @@ jobs:
 
         # get .dacpac file path
         - powershell: |
-            Get-ChildItem "$(Pipeline.Workspace)\${{ parameters.appName.name }}" -Filter *.dacpac | 
+            Get-ChildItem "$(Pipeline.Workspace)" -Recurse -Filter *.dacpac | 
             Foreach-Object {
+                Write-host $($_.FullName)
                 Write-Host "##vso[task.setvariable variable=dacpacFilePath;]$($_.FullName)"
             }
           displayName: dacpac file path

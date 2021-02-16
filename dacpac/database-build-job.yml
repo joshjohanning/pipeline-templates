@@ -29,4 +29,4 @@ jobs:
       flattenFolders: true
 
   - publish: '$(Build.ArtifactStagingDirectory)'
-    artifact: ${{ parameters.appName }}
+    artifact: drop-db
