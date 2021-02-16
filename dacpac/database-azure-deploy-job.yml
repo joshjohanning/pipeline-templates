@@ -69,7 +69,7 @@ jobs:
 
         # Generate deploy report - compare dacpac to db
         - task: SqlAzureDacpacDeployment@1
-          displayName: Generate schema change script
+          displayName: Generate deploy report
           inputs:
             azureSubscription: 'Resource Manager - Tailspin - Space Game'
             authenticationType: ${{ parameters.authenticationType }} # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
@@ -89,7 +89,7 @@ jobs:
         
         # Generate deploy report - write to log
         - task: PowerShell@2
-          displayName: Show Auto Generated SQL Script
+          displayName: Show Deploy Report
           inputs:
             targetType: 'inline'
             script: | 
@@ -98,7 +98,7 @@ jobs:
 
         # Generate drift report - compare dacpac to db
         - task: SqlAzureDacpacDeployment@1
-          displayName: Generate schema change script
+          displayName: Generate drift report
           inputs:
             azureSubscription: 'Resource Manager - Tailspin - Space Game'
             authenticationType: ${{ parameters.authenticationType }} # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
@@ -118,7 +118,7 @@ jobs:
         
         # Generate drift report - write to log
         - task: PowerShell@2
-          displayName: Show Auto Generated SQL Script
+          displayName: Show Drift Report
           inputs:
             targetType: 'inline'
             script: | 
