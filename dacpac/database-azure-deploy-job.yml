@@ -67,6 +67,64 @@ jobs:
               Write-Host "Auto Generated SQL Update Script:"
               Get-Content d:\a\1\s\GeneratedOutputFiles\${{ parameters.databaseName }}_Script.sql | foreach {Write-Output $_}
 
+        # Generate deploy report - compare dacpac to db
+        - task: SqlAzureDacpacDeployment@1
+          displayName: Generate schema change script
+          inputs:
+            azureSubscription: 'Resource Manager - Tailspin - Space Game'
+            authenticationType: ${{ parameters.authenticationType }} # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
+            serverName: ${{ parameters.serverName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+            databaseName: ${{ parameters.databaseName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+            sqlUsername: ${{ parameters.sqlUsername }} # Required when authenticationType == Server
+            sqlPassword: ${{ parameters.sqlPassword }} # Required when authenticationType == Server
+            aadSqlUsername: ${{ parameters.aadSqlUsername }} # Required when authenticationType == AadAuthenticationPassword
+            aadSqlPassword: ${{ parameters.aadSqlPassword }} # Required when authenticationType == AadAuthenticationPassword
+            connectionString: ${{ parameters.connectionString }} # Required when authenticationType == ConnectionString
+            deployType: 'DacpacTask'
+            deploymentAction: 'DeployReport'
+            dacpacFile: '$(dacpacFilePath)'
+            PublishProfile: '${{ parameters.publishProfile }}'
+            AdditionalArguments: '${{ parameters.additionalArguments }}'
+            ipDetectionMethod: 'AutoDetect'
+        
+        # Generate deploy report - write to log
+        - task: PowerShell@2
+          displayName: Show Auto Generated SQL Script
+          inputs:
+            targetType: 'inline'
+            script: | 
+              Write-Host "Auto Generated SQL Update Script:"
+              Get-Content d:\a\1\s\GeneratedOutputFiles\${{ parameters.databaseName }}_DeployReport.xml | foreach {Write-Output $_}
+
+        # Generate drift report - compare dacpac to db
+        - task: SqlAzureDacpacDeployment@1
+          displayName: Generate schema change script
+          inputs:
+            azureSubscription: 'Resource Manager - Tailspin - Space Game'
+            authenticationType: ${{ parameters.authenticationType }} # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
+            serverName: ${{ parameters.serverName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+            databaseName: ${{ parameters.databaseName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+            sqlUsername: ${{ parameters.sqlUsername }} # Required when authenticationType == Server
+            sqlPassword: ${{ parameters.sqlPassword }} # Required when authenticationType == Server
+            aadSqlUsername: ${{ parameters.aadSqlUsername }} # Required when authenticationType == AadAuthenticationPassword
+            aadSqlPassword: ${{ parameters.aadSqlPassword }} # Required when authenticationType == AadAuthenticationPassword
+            connectionString: ${{ parameters.connectionString }} # Required when authenticationType == ConnectionString
+            deployType: 'DacpacTask'
+            deploymentAction: 'DriftReport'
+            dacpacFile: '$(dacpacFilePath)'
+            PublishProfile: '${{ parameters.publishProfile }}'
+            AdditionalArguments: '${{ parameters.additionalArguments }}'
+            ipDetectionMethod: 'AutoDetect'
+        
+        # Generate drift report - write to log
+        - task: PowerShell@2
+          displayName: Show Auto Generated SQL Script
+          inputs:
+            targetType: 'inline'
+            script: | 
+              Write-Host "Auto Generated SQL Update Script:"
+              Get-Content d:\a\1\s\GeneratedOutputFiles\${{ parameters.databaseName }}_DriftReport.xml | foreach {Write-Output $_}
+
         # Run the deploy - make sure runDeploy is true
         - ${{ if eq(parameters.runDeploy, 'true') }}:
           - task: SqlAzureDacpacDeployment@1
