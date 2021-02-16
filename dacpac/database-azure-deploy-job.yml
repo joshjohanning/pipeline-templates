@@ -10,6 +10,7 @@ parameters:
   connectionString: '' # Required when authenticationType == ConnectionString
   publishProfile: '' # Optional
   additionalArguments: '' # Optional
+  runDeploy: true    # Run deploy or not - switch to false if you want to use a verify/approve sql changes stage
   environment: ''
   pool: 
     vmImage: 'windows-latest'
@@ -36,10 +37,39 @@ jobs:
             }
           displayName: dacpac file path
 
+        # Generate schema change script - compare dacpac to db
         - task: SqlAzureDacpacDeployment@1
+          displayName: Generate schema change script
+          inputs:
+            azureSubscription: 'Resource Manager - Tailspin - Space Game'
+            authenticationType: ${{ parameters.authenticationType }} # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
+            serverName: ${{ parameters.serverName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+            databaseName: ${{ parameters.databaseName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+            sqlUsername: ${{ parameters.sqlUsername }} # Required when authenticationType == Server
+            sqlPassword: ${{ parameters.sqlPassword }} # Required when authenticationType == Server
+            aadSqlUsername: ${{ parameters.aadSqlUsername }} # Required when authenticationType == AadAuthenticationPassword
+            aadSqlPassword: ${{ parameters.aadSqlPassword }} # Required when authenticationType == AadAuthenticationPassword
+            connectionString: ${{ parameters.connectionString }} # Required when authenticationType == ConnectionString
+            deployType: 'DacpacTask'
+            deploymentAction: 'Script'
+            dacpacFile: '$(dacpacFilePath)'
+            ipDetectionMethod: 'AutoDetect'
+        
+        # Generate schema change script - write to log
+        - task: PowerShell@2
+          displayName: Show Auto Generated SQL Script
+          inputs:
+            targetType: 'inline'
+            script: | 
+              Write-Host "Auto Generated SQL Update Script:"
+              Get-Content d:\a\1\s\GeneratedOutputFiles\${{ parameters.databaseName }}_Script.sql | foreach {Write-Output $_}
+
+        # Run the deploy - make sure runDeploy is true
+        - task: SqlAzureDacpacDeployment@1
+          condition: and(succeeded(), eq(variables['runDeploy'], 'true'))
           inputs:
             azureSubscription: ${{ parameters.azureSubscription }}
-            authenticationType: ${{ parameters.authenticationType }}
+            authenticationType: ${{ parameters.authenticationType }} # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
             serverName: ${{ parameters.serverName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
             databaseName: ${{ parameters.databaseName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
             sqlUsername: ${{ parameters.sqlUsername }} # Required when authenticationType == Server
