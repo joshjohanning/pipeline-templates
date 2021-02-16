@@ -23,9 +23,6 @@ jobs:
 
   environment: '${{ parameters.environment }}'
 
-  # variable group to be used in replace tokens
-  variables: ${{ parameters.variables }}
-
   strategy:
     runOnce:
       deploy:
