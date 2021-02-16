@@ -54,6 +54,8 @@ jobs:
             deployType: 'DacpacTask'
             deploymentAction: 'Script'
             dacpacFile: '$(dacpacFilePath)'
+            PublishProfile: '${{ parameters.publishProfile }}'
+            AdditionalArguments: '${{ parameters.additionalArguments }}'
             ipDetectionMethod: 'AutoDetect'
         
         # Generate schema change script - write to log
