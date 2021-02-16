@@ -1,5 +1,4 @@
 parameters:
-  appName: ''                       # used for job names and artifact names - cannot include "-" or ".", or any other special characters (only underscore)
   buildConfiguration: 'Release'     # build configuration for build
   additionalArgs: ''                # additional msbuild args - default is specifying the output directory
   vsVersion: '15.0'                 # 15.0 = Visual Studio 2017. Other Options: 15.0 | 16.0 | Latest
@@ -7,8 +6,8 @@ parameters:
     vmImage: 'windows-latest'
 
 jobs:
-- job: build_${{ parameters.appName }}
-  displayName: ${{ parameters.appName }}
+- job: build_db
+  displayName: Build Database
   pool: ${{ parameters.pool }}
 
   steps:

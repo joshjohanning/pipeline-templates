@@ -1,5 +1,4 @@
 parameters:
-  appName: '[]'   # Inputs: appName.Name. AppName.Name cannot include "-" or ".", or any other special characters (only underscore)
   azureSubscription: '' # Required
   authenticationType: 'server' # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
   serverName: '' # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
@@ -16,8 +15,8 @@ parameters:
     vmImage: 'windows-latest'
 
 jobs:
-- deployment: deploy_${{ parameters.appName.name }}
-  displayName: ${{ parameters.appName.name }}
+- deployment: deploy_db
+  displayName: Deploy Database
   workspace:
     clean: all
 
