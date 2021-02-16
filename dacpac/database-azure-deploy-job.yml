@@ -69,7 +69,7 @@ jobs:
 
         # Run the deploy - make sure runDeploy is true
         - task: SqlAzureDacpacDeployment@1
-          condition: and(succeeded(), eq(variables['runDeploy'], 'true'))
+          condition: and(succeeded(), eq(parameters['runDeploy'], 'true'))
           inputs:
             azureSubscription: ${{ parameters.azureSubscription }}
             authenticationType: ${{ parameters.authenticationType }} # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
