@@ -1,0 +1,33 @@
+parameters:
+  appName: ''                       # used for job names and artifact names - cannot include "-" or ".", or any other special characters (only underscore)
+  buildConfiguration: 'Release'     # build configuration for build
+  additionalArgs: ''                # additional msbuild args - default is specifying the output directory
+  vsVersion: '15.0'                 # 15.0 = Visual Studio 2017. Other Options: 15.0 | 16.0 | Latest
+  pool: 
+    vmImage: 'windows-latest'
+
+jobs:
+- job: build_${{ parameters.appName }}
+  displayName: ${{ parameters.appName }}
+  pool: ${{ parameters.pool }}
+
+  steps:
+
+  - checkout: self
+
+  - task: VSBuild@1
+    displayName: VSBuild sqlproj
+    inputs:
+      solution: '**\*.sqlproj'
+      vsVersion: '${{ parameters.vsVersion }}'
+      configuration: '${{ parameters.buildConfiguration }}'
+      msbuildArgs: '${{ parameters.additionalArgs }}'
+
+  - task: CopyFiles@2
+    inputs:
+      Contents: '**/*.dacpac'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      flattenFolders: true
+
+  - publish: '$(Build.ArtifactStagingDirectory)'
+    artifact: ${{ parameters.appName }}

@@ -1,0 +1,58 @@
+parameters:
+  appName: '[]'   # Inputs: appName.Name. AppName.Name cannot include "-" or ".", or any other special characters (only underscore)
+  azureSubscription: '' # Required
+  authenticationType: 'server' # Options: server, aadAuthenticationPassword, aadAuthenticationIntegrated, connectionString, servicePrincipal
+  serverName: '' # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+  databaseName: '' # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+  sqlUsername: '' # Required when authenticationType == Server
+  sqlPassword: '' # Required when authenticationType == Server
+  aadSqlUsername: '' # Required when authenticationType == AadAuthenticationPassword
+  aadSqlPassword: '' # Required when authenticationType == AadAuthenticationPassword
+  connectionString: '' # Required when authenticationType == ConnectionString
+  publishProfile: '' # Optional
+  additionalArguments: '' # Optional
+  environment: ''
+  pool: 
+    vmImage: 'windows-latest'
+
+jobs:
+- deployment: deploy_${{ parameters.appName.name }}
+  displayName: ${{ parameters.appName.name }}
+  workspace:
+    clean: all
+
+  environment: '${{ parameters.environment }}'
+
+  # variable group to be used in replace tokens
+  variables: ${{ parameters.variables }}
+
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+
+        # get .dacpac file path
+        - powershell: |
+            Get-ChildItem "$(Pipeline.Workspace)\${{ parameters.appName.name }}" -Filter *.dacpac | 
+            Foreach-Object {
+                Write-Host "##vso[task.setvariable variable=dacpacFilePath;]$($_.FullName)"
+            }
+          displayName: dacpac file path
+
+        - task: SqlAzureDacpacDeployment@1
+          inputs:
+            azureSubscription: ${{ parameters.azureSubscription }}
+            authenticationType: ${{ parameters.authenticationType }}
+            serverName: ${{ parameters.serverName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+            databaseName: ${{ parameters.databaseName }} # Required when authenticationType == Server || AuthenticationType == AadAuthenticationPassword || AuthenticationType == AadAuthenticationIntegrated || AuthenticationType == servicePrincipal
+            sqlUsername: ${{ parameters.sqlUsername }} # Required when authenticationType == Server
+            sqlPassword: ${{ parameters.sqlPassword }} # Required when authenticationType == Server
+            aadSqlUsername: ${{ parameters.aadSqlUsername }} # Required when authenticationType == AadAuthenticationPassword
+            aadSqlPassword: ${{ parameters.aadSqlPassword }} # Required when authenticationType == AadAuthenticationPassword
+            connectionString: ${{ parameters.connectionString }} # Required when authenticationType == ConnectionString
+            deployType: 'DacpacTask'
+            DeploymentAction: 'Publish'
+            DacpacFile: '$(dacpacFilePath)'
+            PublishProfile: '${{ parameters.publishProfile }}'
+            AdditionalArguments: '${{ parameters.additionalArguments }}'
+            IpDetectionMethod: 'AutoDetect'
