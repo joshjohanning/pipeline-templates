@@ -20,6 +20,7 @@ jobs:
   workspace:
     clean: all
 
+  pool: ${{ parameters.pool }}
   environment: '${{ parameters.environment }}'
 
   strategy:
