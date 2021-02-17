@@ -28,6 +28,7 @@ jobs:
       dropName: 'drop-db'
       dacpacName: '${{ parameters.dacpacName }}'
       targetDacPacPath: '${{ parameters.dacpacName }}/bin/${{ parameters.buildConfiguration }}'
+      reverse: true
 
   - task: CopyFiles@2
     inputs:
