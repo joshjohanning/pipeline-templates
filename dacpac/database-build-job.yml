@@ -2,7 +2,7 @@ parameters:
   buildConfiguration: 'Release'     # build configuration for build
   additionalArgs: ''                # additional msbuild args - default is specifying the output directory
   vsVersion: '15.0'                 # 15.0 = Visual Studio 2017. Other Options: 15.0 | 16.0 | Latest
-  dacpacName: ''
+  dacpacName: ''                    # ie MyDBProject           
   pool: 
     vmImage: 'windows-latest'
 
@@ -27,7 +27,7 @@ jobs:
     inputs:
       dropName: 'drop-db'
       dacpacName: '${{ parameters.dacpacName }}'
-      targetDacPacPath: '$(build.sourcesdirectory)\**'
+      targetDacPacPath: '${{ parameters.dacpacName }}/bin/${{ parameters.buildConfiguration }}'
 
   - task: CopyFiles@2
     inputs:
