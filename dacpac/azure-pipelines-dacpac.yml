@@ -1,0 +1,56 @@
+trigger:
+  - main
+
+resources:
+  repositories:
+  - repository: templates
+    type: github
+    name: soccerjoshj07/pipeline-templates
+    endpoint: soccerjoshj07
+
+stages:
+- stage: 'Build'
+  jobs: 
+  - template: dacpac/database-build-job.yml@templates
+    parameters:
+      vsVersion: Latest
+      dacpacName: tailspinjosh-db
+
+- stage: DBAVerificationScript
+  displayName: 'Script db changes'
+  variables: 
+    - name: azureSubscription
+      value: demo-mslearn-tailspin-azure
+    - group: tailspin.DEV
+  jobs: 
+  - template: dacpac/database-azure-deploy-job.yml@templates
+    parameters:
+      azureSubscription: '${{ variables.azureSubscription }}'
+      authenticationType: server
+      serverName: tailspinjosh-server-dev.database.windows.net
+      databaseName: tailspinjosh-db-dev
+      sqlUsername: joshadmin
+      sqlPassword: $(DBServerPassword)
+      additionalArguments: '/p:IgnoreAuthorizer=True /p:ScriptDatabaseOptions=False /p:ExcludeObjectTypes=RoleMembership /p:BlockOnPossibleDataLoss=False /p:GenerateSmartDefaults=True'
+      environment: dev
+      runDeploy: false
+
+- stage: deployDev
+  displayName: Deploy to Dev
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  variables: 
+    - name: azureSubscription
+      value: demo-mslearn-tailspin-azure
+    - group: tailspin.DEV
+  jobs: 
+  - template: dacpac/database-azure-deploy-job.yml@templates
+    parameters:
+      azureSubscription: '${{ variables.azureSubscription }}'
+      authenticationType: server
+      serverName: tailspinjosh-server-dev.database.windows.net
+      databaseName: tailspinjosh-db-dev
+      sqlUsername: joshadmin
+      sqlPassword: $(DBServerPassword)
+      additionalArguments: '/p:IgnoreAuthorizer=True /p:ScriptDatabaseOptions=False /p:ExcludeObjectTypes=RoleMembership /p:BlockOnPossibleDataLoss=False /p:GenerateSmartDefaults=True'
+      environment: dev
+      runDeploy: true
