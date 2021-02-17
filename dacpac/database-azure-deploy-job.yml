@@ -96,7 +96,7 @@ jobs:
               Write-Host "Deploy report:"
               $xml = Get-Content d:\a\1\s\GeneratedOutputFiles\${{ parameters.databaseName }}_DeployReport.xml | foreach {Write-Output $_}
 
-              function WriteXmlToConsole ([xml]$xml)
+              function Write-XmlToConsole ([xml]$xml)
               {
                   $StringWriter = New-Object System.IO.StringWriter;
                   $XmlWriter = New-Object System.Xml.XmlTextWriter $StringWriter;
@@ -107,7 +107,7 @@ jobs:
                   Write-Output $StringWriter.ToString();
               }
 
-              WriteXmlToConsole $xml
+              Write-XmlToConsole $xml
 
         # Run the deploy - make sure runDeploy is true
         - ${{ if eq(parameters.runDeploy, 'true') }}:
