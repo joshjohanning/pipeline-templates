@@ -97,6 +97,7 @@ jobs:
       # This should run on windows+ubuntu
       # If only cared about windows and were okay with downloading a .coverage file instead of inline results, remove the /p: arguments and just used '--collect "Code coverage"'
       # Sept 22 20: updated code coverage to be less flaky - old: /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura' . See: https://github.com/coverlet-coverage/coverlet/blob/master/Documentation/KnownIssues.md#1-vstest-stops-process-execution-earlydotnet-test
+      # With new version, we are using 'coverlet.collector' NuGet package instead
       - task: DotNetCoreCLI@2
         displayName: 'dotnet test'
         inputs:
