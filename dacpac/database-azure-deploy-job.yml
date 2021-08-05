@@ -65,7 +65,7 @@ jobs:
             targetType: 'inline'
             script: | 
               Write-Host "Auto Generated SQL Update Script:"
-              Get-Content d:\a\1\s\GeneratedOutputFiles\${{ parameters.databaseName }}_Script.sql | foreach {Write-Output $_}
+              Get-Content $(Build.SourcesDirectory)\GeneratedOutputFiles\${{ parameters.databaseName }}_Script.sql | foreach {Write-Output $_}
 
         # Generate deploy report - compare dacpac to db
         - task: SqlAzureDacpacDeployment@1
@@ -94,7 +94,7 @@ jobs:
             targetType: 'inline'
             script: | 
               Write-Host "Deploy report:"
-              $xml = Get-Content d:\a\1\s\GeneratedOutputFiles\${{ parameters.databaseName }}_DeployReport.xml | foreach {Write-Output $_}
+              $xml = Get-Content $(Build.SourcesDirectory)\GeneratedOutputFiles\${{ parameters.databaseName }}_DeployReport.xml | foreach {Write-Output $_}
 
               function Write-XmlToConsole ([xml]$xml)
               {
