@@ -17,7 +17,7 @@ jobs:
 
   pool: ${{ parameters.pool }}
 
-  environment: 'soccerjoshj07pipelinesjavascriptdocker.default'
+  environment: 'joshjohanningpipelinesjavascriptdocker.default'
   
   strategy:
     runOnce:
@@ -47,7 +47,7 @@ jobs:
   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/pull/'))
   pool: ${{ parameters.pool }}
   
-  environment: 'soccerjoshj07pipelinesjavascriptdocker.${{ parameters.k8sNamespaceForPR }}'
+  environment: 'joshjohanningipelinesjavascriptdocker.${{ parameters.k8sNamespaceForPR }}'
   strategy:
     runOnce:
       deploy:
