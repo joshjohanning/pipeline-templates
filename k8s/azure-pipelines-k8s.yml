@@ -5,7 +5,7 @@
 trigger:
   branches: 
     include: 
-      - master
+      - main
 
 name: 1.0$(rev:.r)
 

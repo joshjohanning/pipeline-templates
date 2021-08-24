@@ -18,9 +18,9 @@ pool:
 resources:
   repositories:
   - repository: templates
-    name: tool.PipelineTemplates
+    name: pipeline-templates
     type: git
-    ref: master
+    ref: main
 
 variables:
   # global

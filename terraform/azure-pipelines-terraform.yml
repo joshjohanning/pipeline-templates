@@ -1,7 +1,7 @@
 # From: https://github.com/soccerjoshj07/azdo-terraform-tailspin
 
 trigger:
-  - master
+  - main
 
 resources:
   repositories:

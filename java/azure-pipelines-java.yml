@@ -12,7 +12,7 @@ resources:
     type: git
 
 trigger:
-- master
+- mamainster
 
 stages: 
 - stage: build
