@@ -1,0 +1,99 @@
+parameters:
+  buildConfiguration: 'Release'
+  nugetFeed: ''
+  name: 'Tailspin.SpaceGame.Web'
+  vmImage: 'ubuntu-latest'
+  projectFile: '**/Tailspin.SpaceGame.Web.csproj'
+  runDotNetCoreTests: true
+
+jobs:
+
+- job:
+  displayName: build ${{ parameters.name }}
+  variables:
+    # Use the latest reportgenerator for code coverage
+    disable.coverage.autogenerate: 'true'
+  pool:
+    vmImage: '${{ parameters.vmImage }}'
+
+  steps:
+
+  - checkout: self
+
+  # - task: VersionAssemblies@2
+  #   inputs:
+  #     sourcePath: '$(Build.SourcesDirectory)'
+  #     filePattern: '**/AssemblyInfo.*'
+  #     versionSource: 'buildNumber'
+  #     versionFormat: 'fourParts'
+  #     replaceVersionFormat: 'fourParts'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet restore'
+    inputs:
+      command: 'restore'
+      projects: '${{ parameters.projectFile }}'
+      vstsFeed: '${{ parameters.nugetFeed }}'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet build'
+    inputs:
+      command: 'build'
+      projects: '${{ parameters.projectFile }}'
+      arguments: '--configuration ${{ parameters.buildConfiguration }} /p:Version=$(build.buildnumber)'
+
+  - ${{ if eq(parameters.runDotNetCoreTests, 'true') }}:
+    # Run tests - ensure `coverlet.msbuild` nuget package is added on each test project for code coverage
+    # This should run on windows+ubuntu
+    # If only cared about windows and were okay with downloading a .coverage file instead of inline results, remove the /p: arguments and just used '--collect "Code coverage"'
+    # Sept 22 20: updated code coverage to be less flaky - old: /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura' . See: https://github.com/coverlet-coverage/coverlet/blob/master/Documentation/KnownIssues.md#1-vstest-stops-process-execution-earlydotnet-test
+    # With new version, we are using 'coverlet.collector' NuGet package instead
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet test'
+      inputs:
+        command: test
+        projects: '**/*[Tt]ests/*.csproj'
+        publishTestResults: true
+        arguments: '--collect:"XPlat Code Coverage"'
+
+    # Run the report generator for just the app
+    - task: reportgenerator@4
+      inputs:
+        reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml;$(Pipeline.Workspace)/**/Cobertura.xml;$(Agent.WorkFolder)/**/coverage.cobertura.xml'
+        targetdir: '$(Build.ArtifactStagingDirectory)/CoverageResults'
+    #
+    
+    # Download all CoverageResults for all pipeline jobs
+    - download: 'current'
+      patterns: '**/CoverageResults/**'
+
+    - task: reportgenerator@4
+      inputs:
+        reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml;$(Pipeline.Workspace)/**/Cobertura.xml;$(Agent.WorkFolder)/**/coverage.cobertura.xml'
+        targetdir: '$(Pipeline.Workspace)/CoverageResults'
+      
+    - task: PublishCodeCoverageResults@1
+      displayName: 'Publish code coverage report'
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: '$(Pipeline.Workspace)/CoverageResults/Cobertura.xml'
+        reportDirectory: '$(Pipeline.Workspace)/CoverageResults'
+    
+    - task: reportgenerator@4
+      displayName: 'Converting coverage file to sonarqube format'
+      inputs:
+        reports: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml;$(Pipeline.Workspace)/**/Cobertura.xml;$(Agent.WorkFolder)/**/coverage.cobertura.xml'
+        targetdir: '$(Agent.TempDirectory)'
+        reporttypes: 'SonarQube'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet publish'
+    inputs:
+      command: 'publish'
+      publishWebProjects: false
+      projects: '${{ parameters.projectFile }}'
+      zipAfterPublish: true
+      arguments: '--configuration ${{ parameters.buildConfiguration }} --output $(build.artifactstagingdirectory) /p:Version=$(build.buildnumber)'
+
+  - publish: '$(Build.ArtifactStagingDirectory)'
+    artifact: ${{ parameters.name }}
