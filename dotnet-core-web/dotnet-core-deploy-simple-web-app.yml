@@ -13,7 +13,7 @@ parameters:
 
 jobs:
 
-- deployment: 
+- deployment: web
   displayName: deploy ${{ parameters.name }}
   pool:
     vmImage: '${{ parameters.vmImage }}'
