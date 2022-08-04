@@ -3,7 +3,6 @@ parameters:
   vmImage: 'ubuntu-latest'
   name: 'Tailspin.SpaceGame.Web'
   runDeploy: true
-  environment: 'dev'
   replaceTokensTargetFiles: ''
   appSettingsEdits: '-ASPNETCORE_ENVIRONMENT Development'
   jsonVariableSubstituion: 'appsettings.json'
