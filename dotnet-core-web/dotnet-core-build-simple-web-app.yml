@@ -8,7 +8,7 @@ parameters:
 
 jobs:
 
-- job:
+- job: build
   displayName: build ${{ parameters.name }}
   variables:
     # Use the latest reportgenerator for code coverage
