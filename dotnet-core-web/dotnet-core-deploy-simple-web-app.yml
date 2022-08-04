@@ -6,7 +6,7 @@ parameters:
   replaceTokensTargetFiles: ''
   appSettingsEdits: '-ASPNETCORE_ENVIRONMENT Development'
   jsonVariableSubstituion: 'appsettings.json'
-  azureSubscription: '${{ variables.azureSubscription }}'
+  azureSubscription: ''
   websiteName: 'app-tailspin-DEV'
   resourceGroupName: 'rg-tailspin-terraform-DEV'
   slotName: 'swap'
