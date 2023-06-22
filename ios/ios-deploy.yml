@@ -3,8 +3,8 @@ parameters:
   configuration: 'Dev'
   environmentPrefix: 'ugGO-iPad'
   variableGroupPrefix: 'iOS-sample'
-  bundlePrefix: 'com.universalweather'
-  teamId: 'KHGSQ4C2NT'
+  bundlePrefix: 'com.universalapp'
+  teamId: 'KAGSQ4C2NT'
   testFlightUpload: 'true'
   shouldSkipSubmission: 'true' #set false to send notification to testers
 
