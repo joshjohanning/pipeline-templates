@@ -1,0 +1,82 @@
+name: 1.0$(rev:.r)
+
+trigger:
+  - main
+
+resources:
+  repositories:
+  - repository: templates
+    type: github
+    name: joshjohanning/pipeline-templates
+    endpoint: joshjohanning
+    ref: refs/heads/simple-web
+
+stages:
+- stage: 'Build'
+  variables:
+    wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
+    dotnetSdkVersion: '3.1.300'
+    buildConfiguration: 'Release'
+  jobs: 
+  - template: dotnet-core-web/dotnet-core-build-simple-web-app.yml@templates
+    parameters:
+      buildConfiguration: '${{ variables.buildConfiguration }}'
+      nugetFeed: ''
+      name: 'Tailspin.SpaceGame.Web'
+      projectFile: '**/Tailspin.SpaceGame.Web.csproj'
+      repo: 'self'
+      runSonarQube: 'false'
+      sonarProjectKey: '*'
+      sonarProjectName: 'Tailspin.SpaceGame.Web'
+      runDotNetCoreTests: 'true'
+      vmImage: 'ubuntu-latest'
+
+- stage: deployDev
+  displayName: Deploy to Dev
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  variables: 
+    - name: azureSubscription
+      value: demo-mslearn-tailspin-azure
+    - group: tailspin.DEV
+  jobs: 
+  - template: dotnet-core-web/dotnet-core-deploy-simple-web-app.yml@templates
+    parameters:
+      name: 'Tailspin.SpaceGame.Web'
+      runDeploy: true
+      environment: 
+        name: 'dev'
+      vmImage: 'ubuntu-latest'
+      replaceTokensTargetFiles: |
+          **/appsettings.tokenize.json => appsettings.json
+          **/connectionstrings.tokenize.json => connectionstrings.json
+      appSettingsEdits: '-ASPNETCORE_ENVIRONMENT Development'
+      jsonVariableSubstituion: 'appsettings.json'
+      azureSubscription: '${{ variables.azureSubscription }}'
+      websiteName: 'app-tailspin-DEV'
+      resourceGroupName: 'rg-tailspin-terraform-DEV'
+      slotName: 'swap'
+
+- stage: deployProd
+  displayName: Deploy to Prod
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  variables: 
+    - name: azureSubscription
+      value: demo-mslearn-tailspin-azure
+    - group: tailspin.PROD
+  jobs: 
+  - template: dotnet-core-web/dotnet-core-deploy-simple-web-app.yml@templates
+    parameters:
+      name: 'Tailspin.SpaceGame.Web'
+      runDeploy: true
+      environment: 
+        name: 'prod'
+      vmImage: 'ubuntu-latest'
+      replaceTokensTargetFiles: |
+          **/appsettings.tokenize.json => appsettings.json
+          **/connectionstrings.tokenize.json => connectionstrings.json
+      appSettingsEdits: '-ASPNETCORE_ENVIRONMENT Production'
+      jsonVariableSubstituion: 'appsettings.json'
+      azureSubscription: '${{ variables.azureSubscription }}'
+      websiteName: 'app-tailspin-PROD'
+      resourceGroupName: 'rg-tailspin-terraform-PROD'
+      slotName: 'swap'

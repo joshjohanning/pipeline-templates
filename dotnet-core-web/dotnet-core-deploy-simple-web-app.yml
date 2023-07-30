@@ -1,0 +1,79 @@
+parameters:
+  environment: 'Dev'
+  vmImage: 'ubuntu-latest'
+  name: 'Tailspin.SpaceGame.Web'
+  runDeploy: true
+  replaceTokensTargetFiles: ''
+  appSettingsEdits: '-ASPNETCORE_ENVIRONMENT Development'
+  jsonVariableSubstituion: 'appsettings.json'
+  azureSubscription: ''
+  websiteName: 'app-tailspin-DEV'
+  resourceGroupName: 'rg-tailspin-terraform-DEV'
+  slotName: 'swap'
+
+jobs:
+
+- deployment: web
+  displayName: deploy ${{ parameters.name }}
+  pool:
+    vmImage: '${{ parameters.vmImage }}'
+
+  environment: '${{ parameters.environment }}'
+
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        # saves time only downloading the artifact needed
+        - download: current
+          artifact: ${{ parameters.name }}
+      
+        - task: ExtractFiles@1
+          displayName: 'Extract files'
+          inputs:
+            archiveFilePatterns: '$(pipeline.workspace)/**/${{ parameters.name }}.zip'
+            destinationFolder: '$(Pipeline.Workspace)/${{ parameters.name }}/deploy'
+
+        - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+          displayName: 'Replace tokens'
+          inputs:
+            rootDirectory: '$(pipeline.workspace)'
+            targetFiles: '${{ parameters.replaceTokensTargetFiles }}'
+            escapeType: none
+            verbosity: detailed
+
+        - task: AzureRmWebAppDeployment@4
+          displayName: 'Deploy Azure App Service'
+          name: webAppDeployment
+          condition: and(succeeded(), eq('${{ parameters.runDeploy }}', true))
+          inputs:
+            azureSubscription: '${{ parameters.azureSubscription }}'
+            appType: 'webApp' # could make this a parameter if 'webAppLinux' was ever needed to be used
+            WebAppName: '${{ parameters.websiteName }}'
+            deployToSlotOrASE: true
+            ResourceGroupName: '${{ parameters.resourceGroupName }}'
+            SlotName: '${{ parameters.slotName }}'
+            packageForLinux: '$(Pipeline.Workspace)/${{ parameters.name }}/deploy'
+            AppSettings: '${{ parameters.appSettingsEdits }}'
+            JSONFiles: '${{ parameters.jsonVariableSubstituion }}'
+
+        - task: AzureAppServiceManage@0
+          inputs:
+            azureSubscription: '${{ parameters.azureSubscription }}'
+            Action: 'Swap Slots'
+            WebAppName: '${{ parameters.websiteName }}'
+            ResourceGroupName: '${{ parameters.resourceGroupName }}'
+            SourceSlot: '${{ parameters.slotName }}'
+            swapWithProduction: true
+
+        - task: AzureCLI@2
+          displayName: 'Output WebApp URL'
+          inputs:
+            azureSubscription: '${{ parameters.azureSubscription }}'
+            scriptType: 'pscore'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              $webApp = az webapp show --name ${{ parameters.websiteName }} --resource-group ${{ parameters.resourceGroupName }} | ConvertFrom-Json
+              write-host $webApp.defaultHostName -ForegroundColor "green"
+              
+              # az webapp show --name app-tailspin-DEV --resource-group rg-tailspin-terraform-DEV --query defaultHostName
