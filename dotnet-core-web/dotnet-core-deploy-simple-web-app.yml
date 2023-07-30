@@ -10,6 +10,7 @@ parameters:
   websiteName: 'app-tailspin-DEV'
   resourceGroupName: 'rg-tailspin-terraform-DEV'
   slotName: 'swap'
+  deployToSlot: false
 
 jobs:
 
@@ -50,7 +51,7 @@ jobs:
             azureSubscription: '${{ parameters.azureSubscription }}'
             appType: 'webApp' # could make this a parameter if 'webAppLinux' was ever needed to be used
             WebAppName: '${{ parameters.websiteName }}'
-            deployToSlotOrASE: true
+            deployToSlotOrASE: ${{ parameters.deployToSlot }}
             ResourceGroupName: '${{ parameters.resourceGroupName }}'
             SlotName: '${{ parameters.slotName }}'
             packageForLinux: '$(Pipeline.Workspace)/${{ parameters.name }}/deploy'
@@ -58,6 +59,7 @@ jobs:
             JSONFiles: '${{ parameters.jsonVariableSubstituion }}'
 
         - task: AzureAppServiceManage@0
+          condition: and(succeeded(), eq('${{ parameters.deployToSlot }}', true))
           inputs:
             azureSubscription: '${{ parameters.azureSubscription }}'
             Action: 'Swap Slots'
